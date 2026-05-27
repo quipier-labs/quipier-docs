@@ -1,0 +1,31 @@
+{
+  "name": "quipier-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Quipier docs site + SDK playground (docs.quipier.com; playground at /example)",
+  "scripts": {
+    "dev": "vite",
+    "build": "rm -rf dist && tsc --noEmit && vite build && cp static/index.html dist/index.html",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "deploy:dev": "npm run build && wrangler deploy --env dev",
+    "deploy:prod": "npm run build && wrangler deploy --env prod"
+  },
+  "dependencies": {
+    "@quipier/sdk": "^0.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0",
+    "wrangler": "^4.94.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

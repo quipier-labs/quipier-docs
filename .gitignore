@@ -1,0 +1,27 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Cloudflare / Wrangler
+.wrangler/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+
+# yalc (local @quipier/sdk link)
+.yalc/
+yalc.lock

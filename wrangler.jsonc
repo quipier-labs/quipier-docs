@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quipier-docs",
+  "compatibility_date": "2025-09-23",
+  // Static site (assets-only, no Worker): docs landing at "/" + SDK playground
+  // at "/example". SPA fallback returns index.html for unknown paths.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "env": {
+    "dev": {
+      "name": "quipier-docs-dev",
+      // Auto-creates DNS + TLS on the quipier.com zone.
+      "routes": [{ "pattern": "docs-dev.quipier.com", "custom_domain": true }]
+    },
+    "prod": {
+      "name": "quipier-docs",
+      "routes": [{ "pattern": "docs.quipier.com", "custom_domain": true }]
+    }
+  }
+}
