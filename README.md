@@ -2,8 +2,9 @@
 
 Quipier 문서 사이트 + **SDK 플레이그라운드**. `docs.quipier.com`에 배포됩니다.
 
-- `/` — 문서 랜딩 (`static/index.html`, 현재 placeholder · 프레임워크는 추후 도입)
-- `/example` — [`@quipier/sdk`](https://github.com/quipier-labs/quipier.js) 통합을 바로 시험하는 React 플레이그라운드
+- `/`, `/comments`, `/passport`, `/modes` — **human 문서**. `docs/*.md`를 무의존 빌드 스크립트로 정적 HTML 렌더
+- `/llms.txt`, `/llms-full.txt` — **AI용 문서**([llms.txt 표준](https://llmstxt.org/)) — 인덱스 + 전문, 빌드 시 자동 생성
+- `/example` — [`@quipier/sdk`](https://github.com/quipier-labs/quipier.js) 통합을 바로 시험하는 React 플레이그라운드(Vite)
 
 > 대시보드의 Comments → **사용법**, **예제로 보기** 링크가 이 `/example`로 연결됩니다
 > (`projectId`·`apiKey`·`apiBase`·`walletAppOrigin`을 쿼리스트링으로 받아 위젯을 마운트).
@@ -28,15 +29,20 @@ npm run dev          # http://localhost:5174/example
 
 ## 구조 / 배포
 
-- Vite + React 정적 빌드. `base: "/example/"`, 산출물은 `dist/example/`.
-- `npm run build`가 example을 빌드한 뒤 `static/index.html`을 `dist/index.html`(랜딩)로 복사합니다.
-- Cloudflare `assets`(Worker 없음)로 `./dist`를 도메인 루트에 서빙 → `/`=랜딩, `/example`=플레이그라운드.
+정적 사이트(Cloudflare `assets`, Worker 없음). `npm run build`가 두 가지를 합칩니다:
+
+1. **문서** — `docs/*.md`(frontmatter: `title`·`description`·`order`)를 `scripts/build-docs.mjs`(무의존 markdown 렌더)가 정적 HTML로 빌드 → `dist/`(`/`, `/comments` …) + `dist/llms.txt`·`dist/llms-full.txt`.
+2. **플레이그라운드** — Vite + React, `base:"/example/"` → `dist/example/`.
+
+Cloudflare가 `./dist`를 도메인 루트에 서빙 → `/`·`/comments` = 문서, `/example` = 플레이그라운드, `/llms.txt` = AI 문서.
+
+> 문서를 추가하려면 `docs/`에 `.md` 파일을 만들고 frontmatter에 `order`만 주면 사이드바·llms에 자동 포함됩니다.
 
 | 명령 | 설명 |
 | :--- | :--- |
-| `npm run dev` | Vite dev (`localhost:5174/example`) |
-| `npm run build` | 타입체크 + 빌드(`dist/`) + 랜딩 복사 |
-| `npm run preview` | 빌드 산출물 프리뷰 |
+| `npm run dev` | 플레이그라운드 Vite dev (`localhost:5174/example`) |
+| `npm run build` | 문서 HTML + llms.txt + 플레이그라운드 → `dist/` |
+| `npm run preview:site` | 빌드 결과 전체 로컬 서빙 (`localhost:5175`) |
 | `npm run deploy:dev` | `docs-dev.quipier.com` 배포 |
 | `npm run deploy:prod` | `docs.quipier.com` 배포 |
 
