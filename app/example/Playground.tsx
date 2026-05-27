@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { QuipierComments, QuipierProvider } from "@quipier/sdk/react";
 
@@ -81,16 +83,16 @@ function initialConfig(): Config | null {
   return loadConfig();
 }
 
-export function App() {
+export function Playground() {
   const [config, setConfig] = useState<Config | null>(() => initialConfig());
   const [editing, setEditing] = useState(false);
 
   return (
-    <main className="container">
+    <main className="qp-pg">
       <header>
-        <h1>Quipier — React example</h1>
+        <h1>Quipier 플레이그라운드</h1>
         <p className="muted">
-          <a href="http://localhost:3000" target="_blank" rel="noreferrer">
+          <a href="https://app.quipier.com" target="_blank" rel="noreferrer">
             대시보드
           </a>
           에서 프로젝트를 만들고 <code>project id</code>와 <code>publishable key</code>를 가져오세요.
@@ -146,13 +148,13 @@ function HelpBlock() {
       </p>
       <p>
         댓글을 단 뒤{" "}
-        <a href="http://localhost:3000" target="_blank" rel="noreferrer">
+        <a href="https://app.quipier.com" target="_blank" rel="noreferrer">
           대시보드
         </a>{" "}
         의 <strong>Projects → 내 프로젝트 → Comments</strong> 탭에서
         페이지별로 그룹화된 댓글 목록을 확인하고 모더레이션할 수 있습니다.
         작성자(유저)는{" "}
-        <a href="http://localhost:3000/user/me" target="_blank" rel="noreferrer">
+        <a href="https://app.quipier.com/user/me" target="_blank" rel="noreferrer">
           /user/me
         </a>{" "}
         에서 자기가 단 댓글을 다시 볼 수 있습니다.
