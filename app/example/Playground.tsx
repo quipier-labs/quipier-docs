@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QuipierComments, QuipierProvider } from "@quipier/sdk/react";
 
 const STORAGE_KEY = "quipier-example:config";
@@ -84,8 +84,17 @@ function initialConfig(): Config | null {
 }
 
 export function Playground() {
-  const [config, setConfig] = useState<Config | null>(() => initialConfig());
+  // Start null so SSR and the first client render agree (both → ConfigForm).
+  const [config, setConfig] = useState<Config | null>(null);
   const [editing, setEditing] = useState(false);
+
+  // localStorage / URL params are browser-only — read them after mount, not in
+  // render, otherwise the server (null) and client (saved config) HTML diverge
+  // and React throws a hydration mismatch.
+  useEffect(() => {
+    const c = initialConfig();
+    if (c) setConfig(c);
+  }, []);
 
   return (
     <main className="qp-pg">
