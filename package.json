@@ -9,8 +9,8 @@
     "start": "serve out",
     "preview:site": "serve out -l 5175",
     "types:check": "fumadocs-mdx && next typegen && tsc --noEmit",
-    "deploy:dev": "next build && wrangler deploy --env dev",
-    "deploy:prod": "next build && wrangler deploy --env prod"
+    "deploy:dev": "dotenv -e .env.dev -- next build && wrangler deploy --env dev",
+    "deploy:prod": "dotenv -e .env.prod -- next build && wrangler deploy --env prod"
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",
@@ -30,6 +30,7 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "dotenv-cli": "^11.0.0",
     "postcss": "^8.5.15",
     "serve": "^14.2.6",
     "tailwindcss": "^4.3.0",

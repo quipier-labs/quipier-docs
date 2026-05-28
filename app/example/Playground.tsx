@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { QuipierComments, QuipierProvider } from "@quipier/sdk/react";
+import { QUIPIER_URLS } from "@/lib/urls";
 
 const STORAGE_KEY = "quipier-example:config";
-const DEFAULT_API_BASE = "https://api.quipier.com";
-const DEFAULT_WALLET_APP_ORIGIN = "https://passport.quipier.com";
+const DEFAULT_API_BASE = QUIPIER_URLS.api;
+const DEFAULT_WALLET_APP_ORIGIN = QUIPIER_URLS.passport;
 
 interface Config {
   projectId: string;
@@ -101,7 +102,7 @@ export function Playground() {
       <header>
         <h1>Quipier 플레이그라운드</h1>
         <p className="muted">
-          <a href="https://app.quipier.com" target="_blank" rel="noreferrer">
+          <a href={QUIPIER_URLS.app} target="_blank" rel="noreferrer">
             대시보드
           </a>
           에서 프로젝트를 만들고 <code>project id</code>와 <code>publishable key</code>를 가져오세요.
@@ -163,7 +164,7 @@ function HelpBlock() {
         의 <strong>Projects → 내 프로젝트 → Comments</strong> 탭에서
         페이지별로 그룹화된 댓글 목록을 확인하고 모더레이션할 수 있습니다.
         작성자(유저)는{" "}
-        <a href="https://app.quipier.com/user/me" target="_blank" rel="noreferrer">
+        <a href={`${QUIPIER_URLS.app}/user/me`} target="_blank" rel="noreferrer">
           /user/me
         </a>{" "}
         에서 자기가 단 댓글을 다시 볼 수 있습니다.

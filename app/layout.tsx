@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Provider } from '@/components/provider';
+import { QUIPIER_URLS } from '@/lib/urls';
 import './global.css';
 
 const inter = Inter({
@@ -8,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://docs.quipier.com'),
+  metadataBase: new URL(QUIPIER_URLS.docs),
   title: { default: 'Quipier Docs', template: '%s · Quipier' },
   description: 'Quipier — 임베드 댓글 위젯 문서 + SDK 플레이그라운드.',
 };
