@@ -5,7 +5,7 @@
  */
 export const QUIPIER_URLS = {
   api: process.env.NEXT_PUBLIC_QUIPIER_API_BASE || "https://api.quipier.com",
-  app: process.env.NEXT_PUBLIC_QUIPIER_APP_BASE || "https://app.quipier.com",
+  app: process.env.NEXT_PUBLIC_QUIPIER_APP_BASE || "https://quipier.com",
   passport:
     process.env.NEXT_PUBLIC_QUIPIER_PASSPORT_BASE || "https://passport.quipier.com",
   docs: process.env.NEXT_PUBLIC_QUIPIER_DOCS_BASE || "https://docs.quipier.com",
