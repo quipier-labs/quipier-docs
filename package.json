@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",
-    "@quipier/sdk": "^0.1.1",
+    "@quipier/sdk": "file:.yalc/@quipier/sdk",
     "fumadocs-core": "^16.9.1",
     "fumadocs-mdx": "^15.0.9",
     "fumadocs-ui": "^16.9.1",

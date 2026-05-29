@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "packages": {
+    "@quipier/sdk": {
+      "signature": "9dc516003ffc2212e002f944be26cea1",
+      "file": true,
+      "replaced": "^0.1.1"
+    }
+  }
+}

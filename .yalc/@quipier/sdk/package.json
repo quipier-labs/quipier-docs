@@ -1,0 +1,82 @@
+{
+  "name": "@quipier/sdk",
+  "version": "0.1.1",
+  "description": "Embeddable comment widget for Quipier — passport-based comment infrastructure.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/types/index.d.ts",
+  "unpkg": "./dist/quipier.js",
+  "jsdelivr": "./dist/quipier.js",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/types/react.d.ts",
+      "import": "./dist/react.mjs",
+      "require": "./dist/react.cjs"
+    },
+    "./quipier.js": "./dist/quipier.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build --mode cdn && npm run build:types",
+    "build:types": "tsc -p tsconfig.types.json",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run clean && npm run build",
+    "yalc:publish": "npm run build && yalc publish --push",
+    "preversion": "npm run typecheck",
+    "release": "bash scripts/release.sh patch",
+    "release:patch": "bash scripts/release.sh patch",
+    "release:minor": "bash scripts/release.sh minor",
+    "release:major": "bash scripts/release.sh major"
+  },
+  "dependencies": {
+    "preact": "^10.29.1"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quipier-labs/quipier.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/quipier-labs/quipier.js/issues"
+  },
+  "homepage": "https://docs.quipier.com",
+  "keywords": [
+    "comments",
+    "saas",
+    "embed",
+    "widget",
+    "preact",
+    "react",
+    "quipier"
+  ],
+  "license": "MIT",
+  "yalcSig": "9dc516003ffc2212e002f944be26cea1"
+}

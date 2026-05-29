@@ -1,0 +1,1 @@
+Object.defineProperty(exports,Symbol.toStringTag,{value:`Module`});const e=require(`./src-BqWFqnaF.cjs`);exports.destroy=e.t,exports.init=e.n;
