@@ -9,7 +9,7 @@ export function GET() {
   const docs = llms(source).index().replace(/^#\s*Docs\s*\n+/, '');
   const body = `# Quipier
 
-> Embeddable wallet-based comment widget. Drop-in comments for any website; end users post via an anonymous passport (no signup/login).
+> Embeddable passport-based comment widget. Drop-in comments for any website; end users post via an anonymous passport (no signup/login).
 
 ## Docs
 

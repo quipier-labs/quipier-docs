@@ -7,7 +7,7 @@ export default function HomePage() {
         <span className="rounded-full border px-2.5 py-0.5 font-semibold text-fd-primary">
           beta
         </span>
-        wallet-based comments
+        passport-based comments
       </div>
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Quipier</h1>
       <p className="max-w-xl leading-relaxed text-fd-muted-foreground">
