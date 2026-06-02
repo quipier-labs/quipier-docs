@@ -368,6 +368,7 @@ export function Widget(props: WidgetProps) {
           더 보기
         </button>
       ) : null}
+      <QuipierBadge />
     </div>
   );
 }
@@ -425,6 +426,39 @@ function buildTree(comments: Comment[], sort: SortKey): CommentNode[] {
     );
   });
   return roots;
+}
+
+function QuipierMark() {
+  // Inline mark approximating the Quipier Q (rounded-square ring + dot + tail).
+  return (
+    <svg
+      class="quipier-badge-mark"
+      viewBox="0 0 24 24"
+      width="13"
+      height="13"
+      fill="none"
+      aria-hidden="true"
+    >
+      <rect x="3.4" y="3.4" width="14.4" height="14.4" rx="5.4" stroke="currentColor" stroke-width="2.4" />
+      <circle cx="10.6" cy="10.6" r="1.9" fill="currentColor" />
+      <path d="M13.9 14.7 L18.7 19.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+    </svg>
+  );
+}
+
+/** Thin "powered by" strip pinned to the bottom of the widget. */
+function QuipierBadge() {
+  return (
+    <a
+      class="quipier-badge"
+      href="https://quipier.com"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <QuipierMark />
+      <span>Quipier</span>
+    </a>
+  );
 }
 
 function SortIcon() {

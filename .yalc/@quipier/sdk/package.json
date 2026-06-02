@@ -1,6 +1,6 @@
 {
   "name": "@quipier/sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Embeddable comment widget for Quipier — passport-based comment infrastructure.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -78,5 +78,5 @@
     "quipier"
   ],
   "license": "MIT",
-  "yalcSig": "9dc516003ffc2212e002f944be26cea1"
+  "yalcSig": "acfa450f0f6a4116b8cfdde4a5fca330"
 }

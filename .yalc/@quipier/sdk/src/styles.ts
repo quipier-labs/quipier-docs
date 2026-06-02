@@ -173,6 +173,19 @@ const CSS = `
 
 /* ---------- reply / edit form (inside item) ---------- */
 .quipier-reply-form, .quipier-edit-form { margin-top: 8px; }
+
+/* ---------- powered-by badge (thin bottom strip) ---------- */
+.quipier-badge {
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  margin-top: 20px; padding-top: 12px;
+  border-top: 1px solid var(--quipier-border-soft);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--quipier-faint); text-decoration: none;
+  transition: color 0.15s;
+}
+.quipier-badge:hover { color: var(--quipier-muted); }
+.quipier-badge-mark { flex-shrink: 0; }
+.quipier-badge > span { line-height: 1; }
 `;
 
 let injected = false;

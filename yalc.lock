@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "@quipier/sdk": {
-      "signature": "9dc516003ffc2212e002f944be26cea1",
+      "signature": "acfa450f0f6a4116b8cfdde4a5fca330",
       "file": true,
       "replaced": "^0.1.1"
     }
