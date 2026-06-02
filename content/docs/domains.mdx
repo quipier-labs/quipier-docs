@@ -1,0 +1,25 @@
+---
+title: 도메인 인증
+description: publishable key는 공개돼도 안전 — origin 검증으로 무단 사용을 막습니다.
+---
+
+위젯의 `publishable key`는 HTML에 그대로 노출되도록 설계됐습니다. 무단 사용은 **origin(도메인) 검증**으로 막습니다.
+
+## 자동 허용
+
+별도 등록 없이도 다음 origin은 항상 허용됩니다:
+
+- `localhost` / `127.0.0.1` / `*.localhost` — 로컬 개발에서 바로 붙여 볼 수 있어요.
+- Quipier 문서 플레이그라운드(`docs.quipier.com`) — 아무 project id로 [/example](/example)에서 테스트할 수 있습니다.
+
+## 운영 도메인 등록
+
+운영 사이트의 도메인은 대시보드에서 등록해야 위젯이 응답합니다.
+
+1. 대시보드 → 프로젝트 → **Service → 인증 도메인**에서 도메인을 추가합니다.
+2. 안내된 방법으로 도메인 소유를 인증합니다.
+3. 인증된 도메인에서 온 요청만 위젯이 응답하고, 그 외 origin은 `origin not allowed`로 거부됩니다.
+
+<Callout>
+  모든 프로젝트는 같은 API(`https://api.quipier.com`)와 데이터베이스를 사용합니다. 위젯의 `apiBase`는 기본값을 쓰고, 로컬 개발에서만 override 하세요.
+</Callout>

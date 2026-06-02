@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// docs uses `output: export` (static), so route handlers must opt into static.
+export const dynamic = "force-static";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Quipier Docs",

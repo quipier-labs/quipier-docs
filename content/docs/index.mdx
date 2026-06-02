@@ -7,7 +7,7 @@ Quipier는 **어떤 웹사이트에든 붙이는 임베드 댓글 위젯**입니
 
 ## 5분 빠른 시작
 
-1. [대시보드](https://app.quipier.com)에서 프로젝트를 만들고 `project id`와 `publishable key`(`qp_...`)를 확인합니다.
+1. [대시보드](https://quipier.com)에서 프로젝트를 만들고 `project id`와 `publishable key`(`qp_...`)를 확인합니다.
 2. 페이지에 스크립트 한 줄과 컨테이너를 넣습니다.
 
 ```html
@@ -34,10 +34,10 @@ Quipier는 **어떤 웹사이트에든 붙이는 임베드 댓글 위젯**입니
 - **프로젝트** — 댓글이 묶이는 단위. `publishable key`로 위젯을 인증합니다.
 - **page_id** — 한 프로젝트 안에서 댓글 스레드를 나누는 키(보통 `location.pathname`).
 - **패스포트** — 끝 사용자의 익명 신원. 로그인 대신 패스포트로 작성합니다.
-- **모드** — `development`(모든 origin 허용) / `production`(인증된 도메인만).
+- **도메인 인증** — `localhost`·문서 플레이그라운드는 자동 허용, 운영 도메인은 대시보드에서 등록합니다.
 
 ## 다음 단계
 
 - [Comments 연동](/docs/comments) — 스크립트 태그 · npm · React · `init` 옵션
 - [패스포트](/docs/passport) — 익명 신원이 동작하는 방식
-- [Test / Live 모드](/docs/modes) — origin·도메인 인증 차이
+- [도메인 인증](/docs/domains) — publishable key 보호와 운영 도메인 등록
