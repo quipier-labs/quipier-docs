@@ -15,7 +15,7 @@
       "routes": [{ "pattern": "docs-dev.quipier.com", "custom_domain": true }]
     },
     "prod": {
-      "name": "quipier-docs",
+      "name": "quipier-docs-prod",
       "routes": [{ "pattern": "docs.quipier.com", "custom_domain": true }]
     }
   }
