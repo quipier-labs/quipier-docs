@@ -58,6 +58,67 @@ function App() {
 
 `QuipierProvider`가 config를 보관하면 하위 `QuipierComments`들이 자동으로 가져옵니다. 한 페이지에 여러 개를 두고 `pageId`만 다르게 주면 각각 다른 댓글 흐름으로 분리됩니다.
 
+## 4. React Native / Expo
+
+`@quipier/react-native` 패키지로 네이티브 앱에 같은 위젯을 임베드합니다. 백엔드는 동일(`api.quipier.com`)하고, 패스포트 연결은 `react-native-webview` 모달로, 세션은 `@react-native-async-storage/async-storage` 에 저장됩니다.
+
+```bash
+# bare RN
+npm i @quipier/react-native react-native-webview @react-native-async-storage/async-storage
+
+# Expo
+npx expo install react-native-webview @react-native-async-storage/async-storage
+npm i @quipier/react-native
+```
+
+```tsx
+import { QuipierComments } from "@quipier/react-native";
+
+const QUIPIER_CONFIG = {
+  apiKey: "qp_YOUR_PUBLISHABLE_KEY",
+  projectId: "YOUR_PROJECT_ID",
+  pageId: "/posts/my-post",
+};
+
+export default function PostScreen() {
+  return (
+    <QuipierComments
+      apiKey={QUIPIER_CONFIG.apiKey}
+      projectId={QUIPIER_CONFIG.projectId}
+      pageId={QUIPIER_CONFIG.pageId}
+      theme="auto"
+      onComment={(c) => console.log("새 댓글:", c.id)}
+    />
+  );
+}
+```
+
+웹 SDK와 동일하게 `apiKey`·`projectId`·`pageId`만 주면 됩니다. 키/ID는 **코드에 직접 박는 것**이 정상입니다(`qp_…` 은 publishable이라 클라이언트 노출 전제). 사용자별로 키를 분기할 일은 없습니다.
+
+### Props
+
+웹 `init` 옵션과 거의 동일:
+
+- `apiKey`, `projectId`, `pageId` — 필수
+- `apiBase` — 기본 `https://api.quipier.com`
+- `passportAppOrigin` — 기본 `https://passport.quipier.com`
+- `theme` — `"light"` | `"dark"` | `"auto"`(OS 색상 모드 따라감)
+- `dateFormat` — `"relative"`(기본) | `"absolute"`
+- `maxDepth` — `2`(기본, 답글 활성) | `1`(평면)
+- `sort` — `"top"`(기본) | `"newest"`
+- `onComment` — 새 댓글 작성 콜백
+
+### 클라이언트 식별 (분류 ≠ 검증)
+
+운영 대시보드의 댓글 목록은 `iOS`/`Android`/`웹` 뱃지로 클라이언트를 표시합니다. 이는 SDK가 자기 보고하는 `x-quipier-client` 헤더 기반의 **분류**입니다 — 누가 어디서 왔다고 주장하는지의 정보일 뿐, 위조를 막지는 못합니다(curl로 같은 헤더 보낼 수 있음). 실제 abuse 보호는 패스포트 JWT(작성자 단위) · IP/패스포트 차단 · 분당 rate limit으로 합니다. 진짜 "이 앱이 우리 앱이 맞다"는 증명이 필요해지면 Apple App Attest + Google Play Integrity 도입 예정(v0.2+).
+
+### 네이티브 전용 메모
+
+- **`react-native-webview`** 는 패스포트 `/join` 모달용. 미설치 시 모달 자리에 안내 문구가 뜹니다. Expo Go는 호환 WebView를 들고 있으니 그대로 동작하지만, 처음으로 네이티브 모듈을 추가했다면 **dev-client 빌드(`npx expo run:ios` / `run:android`)** 를 한 번 만들어두는 게 안전합니다.
+- **`@react-native-async-storage/async-storage`** 는 세션 영속화용 (`peerDependenciesMeta` 에서 optional). 없으면 콜드스타트마다 세션이 초기화될 뿐 앱은 계속 동작합니다.
+- **로컬 API 서버**(`wrangler dev`, 기본 `:8787`)에 붙일 때 `apiBase` 는 LAN IP 로 (`http://192.168.x.x:8787`). 시뮬레이터/에뮬레이터에서 `localhost` 는 호스트와 분리돼 있어 보통 안 통합니다.
+- **번들 ID/패키지** 는 임의로 잡아도 무방 — Quipier 백엔드는 `apiKey` 의 origin/host 만 검사합니다. 모바일 앱에서는 origin 검사를 우회하는 publishable key 동작이라 별도 등록이 필요 없습니다.
+
 ## `init` 옵션
 
 - `container` — CSS 셀렉터 문자열 또는 `HTMLElement` (필수)

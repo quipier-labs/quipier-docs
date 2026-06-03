@@ -20,3 +20,8 @@ npm-debug.log*
 # Env
 .env
 .env.local
+
+.nvmrc
+next-env.d.ts
+.yalc/
+yalc.lock
