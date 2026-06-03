@@ -1,0 +1,173 @@
+---
+title: 위젯 커스터마이징
+description: 테마 토큰(색·폰트·모양) · feature on/off · 슬롯으로 댓글 위젯을 내 서비스에 맞추기.
+---
+
+댓글 위젯은 **아무 옵션 없이도** 기본 형태로 동작하고, 필요한 만큼만 단계적으로 커스텀합니다. 세 가지 계층이 있습니다.
+
+1. **`appearance`** — 색·폰트·모서리·간격 토큰
+2. **`features`** — UI 요소 on/off
+3. **`slots`** — 특정 부분(또는 댓글 row 전체)을 직접 렌더
+
+모두 `init()`(vanilla)과 `@quipier/sdk/react`(`QuipierProvider`/`QuipierComments`) 양쪽에서 동일하게 받습니다.
+
+## 1. `appearance` — 테마 토큰
+
+```ts
+init({
+  container: "#comments",
+  apiKey: "qp_…",
+  projectId: "…",
+  appearance: {
+    accent: "#4f46e5",        // 버튼/강조
+    accentText: "#ffffff",
+    like: "#e11d48",          // 좋아요(활성)
+    link: "#4f46e5",          // 답글 토글 등
+    font: 'Inter, sans-serif',
+    fontSize: 15,             // 숫자 → px
+    radius: 8,                // 메뉴/입력
+    pillRadius: 8,            // 버튼
+    avatarShape: "square",    // "circle"(기본) | "rounded" | "square"
+    gap: 24,                  // 댓글 간 간격
+  },
+});
+```
+
+지정하지 않은 키는 기본값을 유지합니다. 색 키: `accent` `accentText` `text` `muted` `surface` `border` `link` `like` `danger`.
+
+### CSS로 직접 (토큰)
+
+`appearance`는 결국 컨테이너에 `--quipier-*` CSS 변수를 꽂는 것이라, CSS로도 같은 결과를 낼 수 있습니다. 다크 모드는 `theme: "dark" | "auto"`.
+
+```css
+.my-comments .quipier-root {
+  --quipier-accent: #4f46e5;
+  --quipier-font: Inter, sans-serif;
+  --quipier-avatar-radius: 8px;
+  --quipier-gap: 24px;
+}
+```
+
+전체 토큰: `--quipier-fg --quipier-muted --quipier-faint --quipier-surface --quipier-border --quipier-border-soft --quipier-hover --quipier-accent --quipier-accent-fg --quipier-link --quipier-like --quipier-danger --quipier-font --quipier-font-size --quipier-radius --quipier-radius-pill --quipier-avatar-radius --quipier-gap`.
+
+## 2. `features` — on/off
+
+```ts
+init({
+  // …
+  features: {
+    sort: false,    // 정렬(필터) 버튼 숨김
+    badge: false,   // "powered by Quipier" 숨김
+    likes: true,
+    replies: true,  // false = 답글 비활성(= maxDepth 1)
+    report: true,
+    menu: true,     // 댓글 ⋯ 메뉴
+    composer: true, // 입력창
+    avatars: true,
+  },
+});
+```
+
+모든 키 기본값은 `true`(현재 동작). 끄고 싶은 것만 `false`.
+
+## 3. `slots` — 부분 또는 전체 교체
+
+슬롯 함수는 `HTMLElement | string | null | undefined`(또는 Preact `VNode`)를 반환합니다. **`null`/`undefined`를 반환하면 기본 렌더**로 폴백하므로 조건부 커스텀이 가능합니다.
+
+```ts
+init({
+  // …
+  slots: {
+    // 댓글 row '전체' 교체 — view(데이터) + ctx(동작/헬퍼) 제공
+    comment: (view, ctx) => {
+      if (view.isDeleted) return null;        // 삭제된 건 기본 처리
+      const el = document.createElement("div");
+      el.className = "my-comment";
+      el.textContent = `${view.author.nickname}: ${view.content}`;
+      const like = document.createElement("button");
+      like.textContent = `♥ ${view.likes.count}`;
+      like.onclick = () => ctx.actions.like(); // 동작은 ctx.actions로
+      el.append(like);
+      return el;
+    },
+    // 부분만 교체 — 나머지는 기본 row 유지(속성 상속)
+    avatar: (view) => `<img src="/u/${view.author.id}.png" width="32" />`,
+    authorLabel: (view) => `<b>${view.author.nickname}</b> <span class="vip">VIP</span>`,
+  },
+});
+```
+
+### 슬롯 종류
+
+| 슬롯 | 인자 | 설명 |
+| --- | --- | --- |
+| `header` | `(ctx)` | 상단(개수 + 정렬) 전체 |
+| `composer` | `(ctx)` | 입력창 전체 |
+| `empty` | `(ctx)` | 댓글 0개일 때 |
+| `comment` | `(view, ctx)` | 댓글 row **전체** 교체 |
+| `avatar` | `(view, ctx)` | 아바타만 |
+| `authorLabel` | `(view, ctx)` | 작성자 이름만 |
+| `content` | `(view, ctx)` | 본문만 |
+| `actions` | `(view, ctx)` | 좋아요/답글 줄만 |
+
+`comment`(전체 교체)를 주면 그 안의 부분 슬롯(`avatar` 등)은 무시됩니다 — row 전체를 당신이 그리기 때문.
+
+### `view` (QuipierCommentView)
+
+```ts
+{
+  id, content, createdAt,           // createdAt = ISO 문자열
+  author: { id, nickname, isOwn, blocked },
+  likes: { count, likedByMe },
+  isDeleted, isHidden, parentId, replyCount,
+  raw,                              // 원본 객체(가급적 의존 X)
+}
+```
+
+### `ctx`
+
+- `ctx.actions` — `like() unlike() reply(content) edit(content) remove() report(reason)` (해당 댓글에 바인딩)
+- `ctx.helpers` — `formatTime(iso)`, `avatarColor(seed)`
+- `ctx.theme` — 해석된 `--quipier-*` 값 맵
+- `ctx.defaultNode()` — **기본 렌더 결과를 DOM 노드로** 돌려줘 감싸기/장식에 사용
+
+```ts
+slots: {
+  comment: (view, ctx) => {
+    const wrap = document.createElement("div");
+    wrap.style.borderLeft = "3px solid #4f46e5";
+    wrap.appendChild(ctx.defaultNode()); // 기본 디자인 + 왼쪽 띠만 추가
+    return wrap;
+  },
+}
+```
+
+> ⚠️ `defaultNode()`는 **스냅샷**입니다. 장식(테두리·배지 추가)에는 적합하지만, 그 안의 기본 좋아요 버튼 상태는 위젯 본체와 동기화되지 않습니다. 완전한 동작 제어가 필요하면 `ctx.actions` + `view`로 직접 렌더하세요.
+
+## CSS 훅 (data-part)
+
+슬롯 없이 위치/스타일만 바꾸고 싶다면 모든 요소의 `data-quipier-part`를 CSS로 타겟하세요.
+
+```css
+.quipier-root [data-quipier-part="actions"] { justify-content: flex-end; }
+.quipier-root [data-quipier-part="avatar"] { box-shadow: 0 0 0 2px #4f46e5; }
+```
+
+파트: `root header count sort composer item body head author content actions like reply replies list empty loadmore error badge`.
+
+## React
+
+```tsx
+<QuipierProvider
+  config={{
+    apiKey: "qp_…",
+    projectId: "…",
+    appearance: { accent: "#4f46e5", avatarShape: "square" },
+    features: { sort: false },
+  }}
+>
+  <QuipierComments pageId="/posts/1" />
+</QuipierProvider>
+```
+
+`appearance`/`features`/`slots`는 `<QuipierComments>`에서 인스턴스별로 덮어쓸 수도 있습니다.
