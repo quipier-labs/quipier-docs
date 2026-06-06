@@ -1,0 +1,81 @@
+---
+title: Feed 모듈
+description: 트위터형 포스트 & 답글 피드 — 유저가 직접 글을 쓰고 답글·좋아요를 다는 프로젝트 전역 피드.
+---
+
+**Feed**는 유저가 직접 **포스트**를 쓰고 서로 **답글·좋아요**를 다는 프로젝트 전역 피드입니다(트위터 구조). 외부 글 밑에 붙이는 [Simple Comments](/docs/comments)와 달리, 피드 자체가 컨테이너라 `pageId`가 없습니다.
+
+| | Simple Comments | Feed |
+| --- | --- | --- |
+| 형태 | 외부 글(page)별 댓글 스레드 | 프로젝트 전역 타임라인 |
+| 작성 | 페이지에 댓글 | 유저가 포스트 + 답글 |
+| 임베드 | `init({ pageId })` | `initFeed()` |
+
+대시보드에서 **Feed** 모듈을 켜야 동작합니다(Projects → 프로젝트 → Feed → 설정).
+
+## 설치
+
+```bash
+npm i @quipier/sdk
+```
+
+## 사용 (vanilla)
+
+```ts
+import { initFeed } from "@quipier/sdk";
+
+initFeed({
+  container: "#feed",
+  apiKey: "qp_YOUR_PUBLISHABLE_KEY",
+  projectId: "YOUR_PROJECT_ID",
+});
+```
+
+```html
+<div id="feed"></div>
+<script src="https://cdn.jsdelivr.net/npm/@quipier/sdk@0.2/dist/quipier.js"></script>
+<script>
+  Quipier.initFeed({
+    container: "#feed",
+    apiKey: "qp_YOUR_PUBLISHABLE_KEY",
+    projectId: "YOUR_PROJECT_ID",
+  });
+</script>
+```
+
+## 사용 (React)
+
+```tsx
+import { QuipierProvider, QuipierFeed } from "@quipier/sdk/react";
+
+function Community() {
+  return (
+    <QuipierProvider config={{ apiKey: "qp_…", projectId: "…" }}>
+      <QuipierFeed />
+    </QuipierProvider>
+  );
+}
+```
+
+`QuipierProvider`의 config를 `QuipierComments`와 공유합니다 — 한 프로젝트에서 댓글과 피드를 같이 쓸 수 있어요.
+
+## `initFeed` 옵션
+
+- `container` — CSS 셀렉터 또는 `HTMLElement` (필수)
+- `apiKey` — `qp_…` publishable key
+- `projectId` — 프로젝트 ID
+- `apiBase` — 기본 `https://api.quipier.com`
+- `passportAppOrigin` — 패스포트 팝업 origin
+- `theme` — `"light"` | `"dark"` | `"auto"`
+- `dateFormat` — `"relative"`(기본) | `"absolute"`
+- `onPost` — 새 포스트 작성 콜백
+
+## 동작
+
+- 유저는 상단 작성창에서 **포스트**를 올리고, 각 포스트에 **답글**을 답니다(2단계 스레드).
+- 좋아요·작성은 [패스포트](/docs/passport) 로그인이 필요합니다(댓글과 동일 신원).
+- 답글은 "답글 N개"를 눌러 펼치면 그때 불러옵니다(타임라인이 가벼움).
+
+## 모더레이션
+
+대시보드 **Feed** 탭에서 포스트/답글을 검토합니다: 신고 처리(승인/삭제), **숨김**(되돌릴 수 있음)·**삭제**(휴지통→영구), 작성자·IP 차단은 댓글과 **공유**됩니다(같은 프로젝트라면 한 번 차단으로 댓글·피드 모두 적용).
