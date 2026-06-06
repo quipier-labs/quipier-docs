@@ -259,4 +259,27 @@
     border-radius: 4px;
     color: #b6bac1;
   }
+
+  .pg-nav {
+    display: flex;
+    gap: 4px;
+    margin: 8px 0 4px;
+    border-bottom: 1px solid #232730;
+  }
+  .pg-nav-tab {
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #9aa0a6;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .pg-nav-tab:hover {
+    color: #e6e7ea;
+  }
+  .pg-nav-tab.is-active {
+    color: #fff;
+    border-bottom-color: #4d8eff;
+  }
 }

@@ -1,38 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { QuipierComments, QuipierProvider } from "@quipier/sdk/react";
+import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { QuipierProvider } from "@quipier/sdk/react";
 import { QUIPIER_URLS } from "@/lib/urls";
 
 const STORAGE_KEY = "quipier-example:config";
 const DEFAULT_API_BASE = QUIPIER_URLS.api;
 const DEFAULT_WALLET_APP_ORIGIN = QUIPIER_URLS.passport;
 
-interface Config {
+export interface Config {
   projectId: string;
   apiKey: string;
   apiBase: string;
   walletAppOrigin: string;
 }
-
-interface Post {
-  pageId: string;
-  title: string;
-  body: string;
-}
-
-const POSTS: Post[] = [
-  {
-    pageId: "/posts/morning-coffee",
-    title: "아침 커피 한 잔의 여유",
-    body: "오늘은 평소보다 30분 일찍 일어났다. 갓 내린 커피 한 잔과 함께 창밖을 바라보는 시간이 하루 중 가장 좋다. 여러분은 어떤 아침 루틴을 가지고 있나요?",
-  },
-  {
-    pageId: "/posts/late-night-thoughts",
-    title: "늦은 밤의 잡념",
-    body: "잠이 안 올 때, 무슨 생각을 하나요? 저는 보통 내일 할 일이나, 오늘 못 끝낸 일들을 떠올리며 뒤척이게 됩니다. 가벼운 마음으로 잠드는 비법이 있으면 공유해주세요.",
-  },
-];
 
 function loadConfig(): Config | null {
   try {
@@ -77,21 +60,50 @@ function initialConfig(): Config | null {
     } catch {
       // ignore
     }
-    // Strip credentials from the address bar after applying.
     window.history.replaceState({}, "", window.location.pathname);
     return fromUrl;
   }
   return loadConfig();
 }
 
-export function Playground() {
-  // Start null so SSR and the first client render agree (both → ConfigForm).
+/** Tab nav between the two playgrounds. */
+function PlaygroundNav() {
+  const pathname = usePathname();
+  const tabs = [
+    { href: "/example/simple-comments", label: "Simple Comments" },
+    { href: "/example/feed", label: "Feed" },
+  ];
+  return (
+    <nav className="pg-nav" role="tablist">
+      {tabs.map((t) => (
+        <Link
+          key={t.href}
+          href={t.href}
+          role="tab"
+          aria-selected={pathname === t.href}
+          className={"pg-nav-tab" + (pathname === t.href ? " is-active" : "")}
+        >
+          {t.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/**
+ * Shared playground shell: handles project config (localStorage / dashboard URL),
+ * shows the config form until creds are entered, then wraps `children` in a
+ * QuipierProvider plus a Simple Comments / Feed tab switcher. Config is shared
+ * across both routes (same storage key).
+ */
+export function ExampleShell({
+  children,
+}: {
+  children: (config: Config) => ReactNode;
+}) {
   const [config, setConfig] = useState<Config | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // localStorage / URL params are browser-only — read them after mount, not in
-  // render, otherwise the server (null) and client (saved config) HTML diverge
-  // and React throws a hydration mismatch.
   useEffect(() => {
     const c = initialConfig();
     if (c) setConfig(c);
@@ -109,15 +121,12 @@ export function Playground() {
         </p>
       </header>
 
+      <PlaygroundNav />
+
       {config && !editing ? (
         <QuipierProvider config={config}>
           <ConfigSummary config={config} onEdit={() => setEditing(true)} />
-          <HelpBlock />
-          <div className="posts">
-            {POSTS.map((post) => (
-              <PostCard key={post.pageId} post={post} />
-            ))}
-          </div>
+          {children(config)}
         </QuipierProvider>
       ) : (
         <ConfigForm
@@ -145,45 +154,6 @@ function ConfigSummary({ config, onEdit }: { config: Config; onEdit: () => void 
         설정 변경
       </button>
     </div>
-  );
-}
-
-function HelpBlock() {
-  return (
-    <div className="help-block">
-      <h2>아래 두 게시글에 각각 댓글을 달아보세요</h2>
-      <p>
-        각 게시글은 서로 다른 <code>page_id</code>를 사용해 댓글이 분리됩니다.
-        하나의 패스포트로 두 게시글 모두에 댓글을 달 수 있습니다.
-      </p>
-      <p>
-        댓글을 단 뒤{" "}
-        <a href="https://app.quipier.com" target="_blank" rel="noreferrer">
-          대시보드
-        </a>{" "}
-        의 <strong>Projects → 내 프로젝트 → Comments</strong> 탭에서
-        페이지별로 그룹화된 댓글 목록을 확인하고 모더레이션할 수 있습니다.
-        작성자(유저)는{" "}
-        <a href={`${QUIPIER_URLS.app}/user/me`} target="_blank" rel="noreferrer">
-          /user/me
-        </a>{" "}
-        에서 자기가 단 댓글을 다시 볼 수 있습니다.
-      </p>
-    </div>
-  );
-}
-
-function PostCard({ post }: { post: Post }) {
-  return (
-    <article className="post">
-      <h3 className="post-title">{post.title}</h3>
-      <p className="post-body">{post.body}</p>
-      <div className="post-page-id">
-        <span className="muted">page_id</span>
-        <code>{post.pageId}</code>
-      </div>
-      <QuipierComments pageId={post.pageId} className="quipier-card" />
-    </article>
   );
 }
 
@@ -265,10 +235,8 @@ function ConfigForm({
     if (next === mode) return;
     setError(null);
     if (next === "json") {
-      // Seed the editor with the current field values as a template.
       setJsonText(fieldsAsJson());
     } else {
-      // Best-effort: fold whatever is in the editor back into the fields.
       const { config } = parseConfigJson(jsonText);
       if (config) {
         setProjectId(config.projectId);
@@ -397,8 +365,8 @@ function ConfigForm({
         </p>
       ) : (
         <p className="hint">
-          page_id는 각 게시글에서 자동으로 정해집니다. 설정에는 더 이상 page_id가 없어요.
-          입력값은 브라우저 localStorage에만 저장되며 서버로 전송되지 않습니다.
+          입력값은 브라우저 localStorage에만 저장되며 서버로 전송되지 않습니다. 설정은 두 탭(댓글·피드)이
+          공유합니다.
         </p>
       )}
     </form>
