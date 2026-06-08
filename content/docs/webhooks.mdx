@@ -1,0 +1,119 @@
+---
+title: Webhooks
+description: 프로젝트 이벤트(새 댓글·포스트·신고·모더레이션·멤버)를 운영자 서버로 서명된 POST로 푸시. 서명 검증·재시도·전송 로그.
+---
+
+**Webhooks**는 프로젝트에서 일어나는 이벤트를 운영자의 서버로 실시간 푸시합니다. 새 댓글을 Slack에 알리거나, 신고를 모더레이션 큐로 보내거나, 신규 멤버를 자체 DB에 동기화하는 등에 씁니다.
+
+모듈이 아니라 **프로젝트 전역 개발자 기능**입니다 — 하나의 웹훅이 Comments·Feed·모더레이션 등 **여러 모듈의 이벤트를 함께** 구독합니다.
+
+## 등록
+
+대시보드 → 프로젝트 → **Service → Webhooks**에서:
+
+1. **엔드포인트 URL** 입력 (HTTPS만, 로컬 개발은 `http://localhost` 허용)
+2. **구독 이벤트** 선택
+3. 저장하면 **서명 시크릿**이 한 번만 표시됩니다 — 복사해서 안전하게 보관하세요(다시 표시 안 됨).
+
+각 웹훅은 **테스트 핑**, **전송 로그**, **시크릿 재발급**, **활성/비활성 토글**을 지원합니다.
+
+## 이벤트
+
+| 그룹 | 이벤트 |
+| --- | --- |
+| Comments | `comment.created` · `comment.updated` · `comment.deleted` |
+| Feed | `post.created` · `post.updated` · `post.deleted` |
+| Moderation | `comment.reported` · `post.reported` · `comment.report_resolved` · `post.report_resolved` · `comment.hidden` · `post.hidden` |
+| Members | `member.joined` |
+
+## Payload
+
+모든 전송은 동일한 envelope를 `POST` 합니다:
+
+```json
+{
+  "id": "evt_1a2b3c…",
+  "type": "comment.created",
+  "created_at": "2026-06-08T12:34:56.000Z",
+  "project_id": "4e8da5e9-…",
+  "data": {
+    "id": "…",
+    "page_id": "/blog/hello",
+    "parent_id": null,
+    "author_id": "3HJQ…",
+    "nickname": "민수",
+    "content": "좋은 글이네요!",
+    "client": "web",
+    "created_at": "2026-06-08T12:34:56.000Z"
+  }
+}
+```
+
+- `id` — **이벤트 고유 id**. 재시도해도 동일하므로 **중복 제거(idempotency) 키**로 쓰세요.
+- `created_at`로 **정렬**하세요(at-least-once라 중복·역순 도착 가능).
+- `data`는 **민감 정보를 포함하지 않습니다** — 세션 토큰·시크릿·원본 IP는 절대 전송되지 않습니다.
+
+## 헤더 & 서명 검증
+
+| 헤더 | 값 |
+| --- | --- |
+| `Quipier-Event` | 이벤트 타입 |
+| `Quipier-Webhook-Id` | 이벤트 id(= payload `id`) |
+| `Quipier-Signature` | `t=<unix초>,v1=<hex(HMAC-SHA256)>` |
+
+서명 대상은 **`${t}.${원본 본문}`** 입니다(타임스탬프를 포함해 본문 위조를 차단). **반드시 파싱 전 raw body로 검증**하세요.
+
+```js
+import crypto from "node:crypto";
+
+/** Express: raw body가 필요하므로 express.raw()로 받습니다. */
+function verifyQuipier(rawBody, signatureHeader, secret) {
+  const parts = Object.fromEntries(
+    signatureHeader.split(",").map((kv) => kv.split("=")),
+  );
+  const t = Number(parts.t);
+  const given = parts.v1;
+
+  // 재생 공격 방지: ±5분 윈도우
+  if (!t || Math.abs(Date.now() / 1000 - t) > 300) return false;
+
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(`${t}.${rawBody}`)
+    .digest("hex");
+
+  // 상수 시간 비교
+  return (
+    given.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected))
+  );
+}
+
+// 사용 예 (Express)
+app.post("/quipier/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const raw = req.body.toString("utf8");
+  const ok = verifyQuipier(raw, req.header("Quipier-Signature"), process.env.QUIPIER_WEBHOOK_SECRET);
+  if (!ok) return res.status(401).end();
+
+  const event = JSON.parse(raw);
+  // event.id 로 중복 제거 후 처리…
+  res.status(200).end();
+});
+```
+
+## 전송·재시도
+
+- **응답은 5초 안에 `2xx`** 로 끝내세요. 무거운 작업은 큐에 넣고 바로 응답하는 걸 권장합니다.
+- 전송 지연은 최대 ~1분(서버가 1분 주기로 전송·재시도를 처리).
+- **재시도(지수 백오프)**: 즉시 → +1분 → +5분 → +30분 → +2시간 (최대 5회).
+  - `2xx` = 성공
+  - `5xx`·`429`·타임아웃·네트워크 오류 = 재시도
+  - `4xx`(429 제외) = **영구 실패**(설정 오류로 간주, 재시도 안 함)
+- **자동 비활성화(서킷 브레이커)**: 연속 실패가 누적되면 웹훅이 자동으로 꺼집니다. 대시보드에서 "전송 실패로 자동 중지"로 표시되며, 다시 켜면 카운터가 초기화됩니다.
+- 전송 기록은 30일 후 자동 정리됩니다.
+
+## 보안
+
+- payload에는 **시크릿·세션 토큰·원본 IP가 들어가지 않습니다**.
+- 발신은 **HTTPS만**, 사설/내부 주소로는 전송하지 않습니다(SSRF 방지).
+- 서명 시크릿은 **생성·재발급 시 1회만** 표시됩니다.
