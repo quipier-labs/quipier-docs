@@ -23,5 +23,6 @@ npm-debug.log*
 
 .nvmrc
 next-env.d.ts
-.yalc/
 yalc.lock
+# NOTE: .yalc/ + yalc.lock are COMMITTED (vendored @quipier/sdk) so CI npm ci works.
+# Update flow unchanged: yalc push from quipier.js → commit the diff.
