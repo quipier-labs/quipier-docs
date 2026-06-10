@@ -21,10 +21,13 @@ description: 프로젝트 이벤트(새 댓글·포스트·신고·모더레이�
 
 | 그룹 | 이벤트 |
 | --- | --- |
-| Comments | `comment.created` · `comment.updated` · `comment.deleted` |
-| Feed | `post.created` · `post.updated` · `post.deleted` |
-| Moderation | `comment.reported` · `post.reported` · `comment.report_resolved` · `post.report_resolved` · `comment.hidden` · `post.hidden` |
+| Comments | `comment.created` · `comment.reply.created` · `comment.updated` · `comment.deleted` |
+| Feed | `feed.post.created` · `feed.reply.created` · `feed.post.updated` · `feed.post.deleted` |
+| Moderation | `comment.reported` · `feed.post.reported` · `comment.report_resolved` · `feed.post.report_resolved` · `comment.hidden` · `feed.post.hidden` |
 | Members | `member.joined` |
+
+- **본문 작성과 답글은 별도 이벤트**입니다 — `comment.created`/`feed.post.created`는 최상위 글만, 답글은 `*.reply.created`로 옵니다. "새 답글"만 구독할 수 있습니다.
+- 수정·삭제·모더레이션 이벤트(`feed.post.updated` 등)는 **답글에도 발생**합니다. payload의 `parent_id`(null = 최상위)로 구분하세요.
 
 ## Payload
 
