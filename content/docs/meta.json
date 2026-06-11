@@ -1,3 +1,14 @@
 {
-  "pages": ["index", "comments", "feed", "customization", "passport", "domains", "webhooks"]
+  "pages": [
+    "index",
+    "comments",
+    "feed",
+    "react-native",
+    "customization",
+    "webhooks",
+    "api-reference",
+    "passport",
+    "domains",
+    "troubleshooting"
+  ]
 }

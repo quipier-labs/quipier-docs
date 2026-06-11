@@ -1,0 +1,127 @@
+---
+title: API 레퍼런스
+description: Quipier 공개 REST API — 인증, Comments·Feed 엔드포인트, 에러 형식, 제한.
+---
+
+SDK가 내부적으로 호출하는 공개 REST API입니다. 직접 호출(헤드리스 연동·자체 클라이언트)할 때 참고하세요. 베이스 URL: `https://api.quipier.com`
+
+## 공통 형식
+
+성공 응답은 항상 `data` envelope, 에러는 `error` envelope입니다:
+
+```json
+{ "data": { /* … */ } }
+{ "error": { "code": "FORBIDDEN", "message": "this IP is blocked from commenting" } }
+```
+
+| 에러 코드 | HTTP | 의미 |
+| --- | --- | --- |
+| `INVALID_REQUEST` | 400 | 형식 오류 (필드 누락·제약 위반) |
+| `UNAUTHORIZED` | 401 | API 키/토큰 없음·무효, origin 불허 |
+| `FORBIDDEN` | 403 | 모듈 비활성·쿼터 초과·차단(IP/신원) |
+| `NOT_FOUND` | 404 | 리소스 없음 |
+| `RATE_LIMITED` | 429 | 분당 작성 한도 초과 |
+| `INTERNAL` | 500 | 서버 오류 |
+
+## 인증
+
+세 가지 수준이 있습니다:
+
+1. **API 키 (`x-quipier-key`)** — 읽기·게이트 통과용 publishable key (`qp_…`). **Origin 게이트**와 함께 동작: `localhost`·문서 플레이그라운드는 항상 허용, development 프로젝트는 전체 허용, production 프로젝트는 대시보드에서 검증된 도메인만(와일드카드 `*.example.com` 지원). RN 등 Origin 헤더가 없는 환경은 `x-quipier-origin` 헤더로 대신할 수 있습니다.
+2. **패스포트 토큰** — `POST /v1/passports/auth`로 발급 (scope `passport`, 15분). 패스포트 자체 조회용.
+3. **프로젝트 세션 토큰** — `POST /v1/project-passports/join`으로 발급 (scope `project`, 24시간). **모든 쓰기**(댓글·포스트 작성/수정/삭제/좋아요/신고)는 이 토큰을 `Authorization: Bearer <jwt>`로 보냅니다.
+
+선택 헤더 `x-quipier-client: web|ios|android` — 대시보드 분류용 자기 보고 값입니다.
+
+## 패스포트 인증
+
+### `POST /v1/passports/auth`
+
+기기의 Ed25519 키로 서명해 패스포트 토큰을 받습니다. 인증 불필요.
+
+```json
+{
+  "public_key": "base64(32B Ed25519 공개키)",
+  "signature": "base64(64B 서명)",
+  "ts": 1718000000000
+}
+```
+
+- 서명 대상: `quipier:passport-auth:<passportId>:<ts>` · `ts`는 현재 시각 ±5분 이내
+- 응답: `{ data: { passport_id, token, expires_at, created } }` (신규면 201)
+
+### `POST /v1/project-passports/join`
+
+패스포트를 프로젝트에 연결하고 **프로젝트 세션 토큰**을 받습니다. `Bearer <패스포트 토큰>` 필요.
+
+```json
+{ "project_id": "…", "project_token_id": "BASE32_16-64자", "nickname": "민수" }
+```
+
+- `nickname`: 2–32자, 문자/숫자/공백/`._-`
+- 응답: `{ data: { project_passport, session: { token, expires_at }, created } }`
+
+### `GET /v1/passports/me` · `GET /v1/passports/me/comments`
+
+`Bearer <패스포트 토큰>` — 연결된 프로젝트 목록 / 내가 쓴 댓글 목록.
+
+## Comments
+
+| 메서드 | 경로 | 인증 |
+| --- | --- | --- |
+| GET | `/v1/comments?project_id&page_id&cursor&limit` | API 키(+origin) |
+| POST | `/v1/comments` | API 키 + **세션 토큰** |
+| PATCH | `/v1/comments/:id` | 세션 토큰(작성자만) |
+| DELETE | `/v1/comments/:id` | 세션 토큰(작성자만) |
+| POST / DELETE | `/v1/comments/:id/like` | 세션 토큰 |
+| POST | `/v1/comments/:id/report` | 세션 토큰 |
+
+**작성 body**: `{ project_id, page_id(≤512자), content(1–2000자), parent_id? }`
+**신고 body**: `{ reason: "spam"|"harassment"|"adult"|"privacy"|"other" }`
+
+Comment 객체:
+
+```json
+{
+  "id": "…", "project_id": "…",
+  "author_id": "<project_token_id>", "nickname": "민수",
+  "page_id": "/blog/hello", "content": "…", "parent_id": null,
+  "is_deleted": false, "created_at": "ISO",
+  "likes_count": 0, "liked_by_me": false, "client": "web"
+}
+```
+
+## Feed (Posts)
+
+| 메서드 | 경로 | 인증 |
+| --- | --- | --- |
+| GET | `/v1/posts?project_id&cursor&limit` | API 키(+origin) — 타임라인(최상위만) |
+| GET | `/v1/posts/:id?project_id` | API 키 — 단건(공유 딥링크용) |
+| GET | `/v1/posts/:id/replies?project_id&cursor&limit` | API 키 — 답글(오래된 순) |
+| POST | `/v1/posts` | API 키 + 세션 토큰 |
+| PATCH / DELETE | `/v1/posts/:id` | 세션 토큰(작성자만) |
+| POST / DELETE | `/v1/posts/:id/like` | 세션 토큰 |
+| POST | `/v1/posts/:id/report` | 세션 토큰 |
+
+**작성 body**: `{ project_id, content(이미지 있으면 생략 가능), parent_id?, image? }`
+- `image`: `data:image/...;base64,...` data URL (디코드 기준 최대 2MB — SDK는 자동 압축)
+- 응답 Post에는 `reply_count`, `image_url`이 추가됩니다
+
+## 제한
+
+| 항목 | 값 |
+| --- | --- |
+| 작성 rate limit | IP당 **분당 10건** (comments·posts 각각) |
+| content | 1–2000자 |
+| page_id | ≤512자 |
+| 목록 limit | 1–100 (기본 20), `next_cursor` 커서 페이지네이션 |
+| 모듈 게이트 | 모듈 OFF 시 쓰기만 403 (읽기는 허용) |
+| 쿼터 | 플랜 한도 초과 시 403 + 사유 메시지 |
+
+## 파일
+
+`GET /v1/files/{key}` — 업로드된 공개 이미지(포스트 첨부·서비스 아이콘)는 인증 없이 서빙됩니다. `image_url`이 이 경로를 가리킵니다.
+
+## Webhooks
+
+이벤트 수신(아웃바운드)은 [Webhooks 문서](/docs/webhooks)를 보세요 — payload envelope·서명 검증·재시도 규약.
