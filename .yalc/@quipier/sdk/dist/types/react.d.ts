@@ -62,6 +62,7 @@ export interface QuipierFeedProps {
     urlSync?: FeedInitOptions["urlSync"];
     urlParam?: FeedInitOptions["urlParam"];
     shareUrl?: FeedInitOptions["shareUrl"];
+    appearance?: FeedInitOptions["appearance"];
     className?: string;
     style?: CSSProperties;
 }

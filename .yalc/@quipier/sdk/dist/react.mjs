@@ -1,4 +1,4 @@
-import { n as e, r as t, t as n } from "./src-86BV261O.js";
+import { n as e, r as t, t as n } from "./src-DsN5U0C-.js";
 import { createContext as r, createElement as i, forwardRef as a, useContext as o, useEffect as s, useRef as c } from "react";
 //#region src/react.ts
 var l = r(null);
@@ -52,7 +52,7 @@ var f = a(function(t, r) {
 		style: t.style
 	});
 }), p = a(function(e, r) {
-	let a = d(), o = c(null), l = e.projectId ?? a.projectId, u = e.apiKey ?? a.apiKey, f = e.apiBase ?? a.apiBase, p = e.passportAppOrigin ?? a.passportAppOrigin ?? a.walletAppOrigin, m = e.theme ?? a.theme, h = e.dateFormat ?? a.dateFormat;
+	let a = d(), o = c(null), l = e.projectId ?? a.projectId, u = e.apiKey ?? a.apiKey, f = e.apiBase ?? a.apiBase, p = e.passportAppOrigin ?? a.passportAppOrigin ?? a.walletAppOrigin, m = e.theme ?? a.theme, h = e.dateFormat ?? a.dateFormat, g = e.appearance ?? a.appearance;
 	return s(() => {
 		let r = o.current;
 		if (r) return t({
@@ -66,7 +66,8 @@ var f = a(function(t, r) {
 			onPost: e.onPost,
 			urlSync: e.urlSync,
 			urlParam: e.urlParam,
-			shareUrl: e.shareUrl
+			shareUrl: e.shareUrl,
+			appearance: g
 		}), () => n(r);
 	}, [
 		l,
@@ -75,6 +76,7 @@ var f = a(function(t, r) {
 		p,
 		m,
 		h,
+		g,
 		e.onPost,
 		e.urlSync,
 		e.urlParam,

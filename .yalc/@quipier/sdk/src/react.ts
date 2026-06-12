@@ -178,6 +178,7 @@ export interface QuipierFeedProps {
   urlSync?: FeedInitOptions["urlSync"];
   urlParam?: FeedInitOptions["urlParam"];
   shareUrl?: FeedInitOptions["shareUrl"];
+  appearance?: FeedInitOptions["appearance"];
   className?: string;
   style?: CSSProperties;
 }
@@ -198,6 +199,7 @@ export const QuipierFeed = forwardRef(function QuipierFeed(
     props.passportAppOrigin ?? ctx.passportAppOrigin ?? ctx.walletAppOrigin;
   const theme = props.theme ?? ctx.theme;
   const dateFormat = props.dateFormat ?? ctx.dateFormat;
+  const appearance = props.appearance ?? ctx.appearance;
 
   useEffect(() => {
     const el = localRef.current;
@@ -214,6 +216,7 @@ export const QuipierFeed = forwardRef(function QuipierFeed(
       urlSync: props.urlSync,
       urlParam: props.urlParam,
       shareUrl: props.shareUrl,
+      appearance,
     });
     return () => destroy(el);
   }, [
@@ -223,6 +226,7 @@ export const QuipierFeed = forwardRef(function QuipierFeed(
     passportAppOrigin,
     theme,
     dateFormat,
+    appearance,
     props.onPost,
     props.urlSync,
     props.urlParam,

@@ -1,4 +1,5 @@
 import type { Post } from "../types.js";
+import type { Appearance } from "../customize.js";
 interface FeedWidgetProps {
     apiBase: string;
     apiKey: string;
@@ -16,6 +17,8 @@ interface FeedWidgetProps {
      *  function for full control. Omit → the current page URL with the post param
      *  (works when the feed lives on a shareable page). */
     shareUrl?: string | ((post: Post) => string);
+    /** Theme tokens (colors, font, radius …) — same model as the comments widget. */
+    appearance?: Appearance;
 }
 export declare function FeedWidget(props: FeedWidgetProps): import("preact").JSX.Element;
 export {};

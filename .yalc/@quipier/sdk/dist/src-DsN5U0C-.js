@@ -2517,6 +2517,7 @@ function Nt(e) {
 		class: "quipier-root quipier-feed",
 		"data-quipier-theme": e.theme ?? "light",
 		"data-quipier-part": "root",
+		style: mt(e.appearance),
 		children: [
 			f ? /* @__PURE__ */ Q("div", {
 				class: "quipier-error",
@@ -2647,10 +2648,11 @@ function Ht(e) {
 		onPost: e.onPost,
 		urlSync: e.urlSync,
 		urlParam: e.urlParam,
-		shareUrl: e.shareUrl
+		shareUrl: e.shareUrl,
+		appearance: e.appearance
 	}), t);
 }
 //#endregion
 export { Bt as n, Ht as r, Vt as t };
 
-//# sourceMappingURL=src-86BV261O.js.map
+//# sourceMappingURL=src-DsN5U0C-.js.map
