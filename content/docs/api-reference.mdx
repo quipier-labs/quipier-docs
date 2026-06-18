@@ -107,6 +107,28 @@ Comment 객체:
 - `image`: `data:image/...;base64,...` data URL (디코드 기준 최대 2MB — SDK는 자동 압축)
 - 응답 Post에는 `reply_count`, `image_url`이 추가됩니다
 
+## Chat
+
+1:1 DM + 오픈채팅방. 메시지·실시간은 방 종류와 무관하게 동일합니다. 모든 엔드포인트는 API 키(+origin) **그리고 패스포트 세션 토큰**이 필요합니다(읽기 포함 — 방은 멤버만 봅니다).
+
+| 메서드 | 경로 | 설명 |
+| --- | --- | --- |
+| POST | `/v1/chat/dm` | `{ target_author_id }` → 1:1 DM open-or-get |
+| GET | `/v1/chat/users?q=&limit` | 닉네임으로 사람 검색(새 DM 상대, 자기·차단 제외) |
+| GET | `/v1/chat/rooms` | 내 방 목록(DM + 가입 오픈방) + `unread` |
+| POST | `/v1/chat/rooms` | `{ name, category?, max_members?, duration_minutes? }` → 오픈방 생성 |
+| GET | `/v1/chat/rooms/explore?category=&limit` | 공개 오픈방 탐색(`joined`·`member_count` 포함) |
+| POST | `/v1/chat/rooms/:id/join` · `/leave` | 오픈방 참여(정원·만료 체크)/나가기 |
+| GET | `/v1/chat/rooms/:id/messages?cursor&limit` | 메시지 히스토리(최신→과거 커서) |
+| POST | `/v1/chat/rooms/:id/messages` | `{ content }` 전송 |
+| POST | `/v1/chat/rooms/:id/read` | 읽음 워터마크 갱신 |
+| WS | `/v1/chat/rooms/:id/ws?token=` | 실시간 구독(WebSocket) — 보통 SDK가 자동 처리 |
+
+- `ChatRoom`은 `kind`(`"dm"` | `"open"`)에 따라 `peer`(DM) 또는 `name`/`category`/`member_count`/`max_members`/`expires_at`(오픈방)을 가집니다. `unread`·`joined`는 요청자 기준.
+- `ChatMessage`: `{ id, room_id, author_id, nickname, content, is_deleted, created_at, mine }`.
+- **실시간**: 방마다 Durable Object가 새 메시지·타이핑을 연결된 소켓에 push합니다. WS URL의 `token`은 패스포트 세션 토큰(브라우저가 헤더를 못 보내므로 쿼리로 전달).
+- 운영자용 집계: `GET /v1/projects/:id/chat-usage`(세션) — 방·메시지·참여자 수만(대화 내용은 비공개).
+
 ## 제한
 
 | 항목 | 값 |
