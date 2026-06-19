@@ -549,6 +549,43 @@ function Me(e) {
 		},
 		reportPost(e, n) {
 			return t("POST", `/v1/posts/${e}/report`, { reason: n }, "passport");
+		},
+		openDm(e) {
+			return t("POST", "/v1/chat/dm", { target_author_id: e }, "passport");
+		},
+		listRooms() {
+			return t("GET", "/v1/chat/rooms", void 0, "passport");
+		},
+		createOpenRoom(e) {
+			return t("POST", "/v1/chat/rooms", e, "passport");
+		},
+		exploreRooms(e) {
+			return t("GET", `/v1/chat/rooms/explore${e ? `?limit=${e}` : ""}`, void 0, "passport");
+		},
+		joinRoom(e) {
+			return t("POST", `/v1/chat/rooms/${e}/join`, void 0, "passport");
+		},
+		leaveRoom(e) {
+			return t("POST", `/v1/chat/rooms/${e}/leave`, void 0, "passport");
+		},
+		deleteRoom(e) {
+			return t("DELETE", `/v1/chat/rooms/${e}`, void 0, "passport");
+		},
+		searchUsers(e, n) {
+			let r = new URLSearchParams({ q: e });
+			return n && r.set("limit", String(n)), t("GET", `/v1/chat/users?${r.toString()}`, void 0, "passport");
+		},
+		listMessages(e) {
+			let n = new URLSearchParams();
+			e.cursor && n.set("cursor", e.cursor), e.limit && n.set("limit", String(e.limit));
+			let r = n.toString();
+			return t("GET", `/v1/chat/rooms/${e.room_id}/messages${r ? `?${r}` : ""}`, void 0, "passport");
+		},
+		sendMessage(e, n) {
+			return t("POST", `/v1/chat/rooms/${e}/messages`, { content: n }, "passport");
+		},
+		markRoomRead(e) {
+			return t("POST", `/v1/chat/rooms/${e}/read`, void 0, "passport");
 		}
 	};
 }
@@ -2653,6 +2690,6 @@ function Ht(e) {
 	}), t);
 }
 //#endregion
-export { Bt as n, Ht as r, Vt as t };
+export { Pe as a, Me as c, Z as i, Bt as n, Fe as o, Ht as r, X as s, Vt as t };
 
-//# sourceMappingURL=src-DsN5U0C-.js.map
+//# sourceMappingURL=src-CPoPOjUf.js.map

@@ -1,4 +1,4 @@
-import type { Comment, CreateCommentBody, CreatePostBody, ListCommentsResponse, ListPostsResponse, Post, ReportReason } from "./types.js";
+import type { ChatMessage, ChatRoom, Comment, CreateCommentBody, CreateOpenRoomInput, CreatePostBody, ListCommentsResponse, ListMessagesResponse, ListOpenRoomsResponse, ListPostsResponse, ListRoomsResponse, Post, ReportReason, SearchUsersResponse } from "./types.js";
 export interface ClientConfig {
     apiBase: string;
     apiKey: string;
@@ -61,6 +61,29 @@ export declare function createClient(config: ClientConfig): {
         liked_by_me: boolean;
     }>;
     reportPost(id: string, reason: ReportReason): Promise<void>;
+    openDm(targetAuthorId: string): Promise<{
+        room: ChatRoom;
+    }>;
+    listRooms(): Promise<ListRoomsResponse>;
+    createOpenRoom(input: CreateOpenRoomInput): Promise<{
+        room: ChatRoom;
+    }>;
+    exploreRooms(limit?: number): Promise<ListOpenRoomsResponse>;
+    joinRoom(roomId: string): Promise<{
+        room: ChatRoom;
+    }>;
+    leaveRoom(roomId: string): Promise<void>;
+    deleteRoom(roomId: string): Promise<void>;
+    searchUsers(query: string, limit?: number): Promise<SearchUsersResponse>;
+    listMessages(params: {
+        room_id: string;
+        cursor?: string;
+        limit?: number;
+    }): Promise<ListMessagesResponse>;
+    sendMessage(roomId: string, content: string): Promise<{
+        message: ChatMessage;
+    }>;
+    markRoomRead(roomId: string): Promise<void>;
 };
 export type Client = ReturnType<typeof createClient>;
 //# sourceMappingURL=client.d.ts.map

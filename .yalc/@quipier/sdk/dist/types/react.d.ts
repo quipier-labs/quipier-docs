@@ -1,5 +1,10 @@
 import { type CSSProperties, type ReactNode } from "react";
 import { type FeedInitOptions, type InitOptions } from "./index.js";
+export { useQuipierConfig, useQuipierSession, type QuipierSessionState, } from "./react/context.js";
+export { useQuipierFeed, type UseQuipierFeedOptions, type UseQuipierFeedResult, } from "./react/useQuipierFeed.js";
+export { useQuipierChat, type UseQuipierChatOptions, type UseQuipierChatResult, } from "./react/useQuipierChat.js";
+export { QuipierChat, type QuipierChatProps } from "./react/QuipierChat.js";
+export type { ChatRoom, ChatPeer, ChatMessage, ChatRoomKind, ChatUser, CreateOpenRoomInput, } from "./types.js";
 export interface QuipierConfig {
     projectId: string;
     apiKey: string;
@@ -26,7 +31,6 @@ export interface QuipierProviderProps {
     children: ReactNode;
 }
 export declare function QuipierProvider({ config, children }: QuipierProviderProps): import("react").FunctionComponentElement<import("react").ProviderProps<QuipierConfig | null>>;
-export declare function useQuipierConfig(): QuipierConfig;
 export interface QuipierCommentsProps {
     /** Logical page id this widget instance scopes comments to.
      *  Defaults to window.location.pathname inside the SDK. */

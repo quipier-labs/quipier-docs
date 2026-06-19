@@ -26,7 +26,29 @@ npm i @quipier/sdk
 
 > Chat은 현재 **웹 SDK(`@quipier/sdk`) 전용**입니다. React Native 미러는 준비 중이며, 그 전에는 패스포트 세션 토큰으로 [REST·WebSocket API](/docs/api-reference#chat)를 직접 호출할 수 있습니다.
 
-## 기본 셋업
+## 기본 컴포넌트 (가장 빠름)
+
+UI를 직접 만들 필요 없이, 바로 붙이는 기본 메신저 `<QuipierChat>`이 있습니다 — 방 목록 + 1:1 DM + 오픈방 + 탐색이 다 들어 있습니다.
+
+```tsx
+import { QuipierProvider, QuipierChat } from "@quipier/sdk/react";
+
+export default function ChatPage() {
+  return (
+    <QuipierProvider config={{ apiKey: "qp_…", projectId: "…", theme: "auto" }}>
+      <QuipierChat height={600} />
+    </QuipierProvider>
+  );
+}
+```
+
+- `theme`(`light`/`dark`/`auto`)에 맞춰 자동 스타일링, 모바일에선 1패널로 접힘.
+- 로그인 안 됐으면 "패스포트 연결" 화면을 먼저 보여줍니다.
+- props: `height`(기본 600) · `className` · `style`.
+
+> 디자인을 완전히 바꾸고 싶다면 아래 **headless 훅**으로 UI를 직접 그리세요(예: [AnonChat](https://docs.quipier.com)이 그렇게 합니다).
+
+## 직접 UI를 그리려면 (headless)
 
 `QuipierProvider`로 감싸고(피드·댓글과 config 공유), 컴포넌트에서 훅을 호출합니다. UI는 100% 직접 렌더입니다.
 

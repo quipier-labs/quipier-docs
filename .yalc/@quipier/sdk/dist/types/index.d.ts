@@ -1,5 +1,10 @@
 import type { Appearance, Features, Slots } from "./customize.js";
 import type { Post } from "./types.js";
+export { ApiError, createClient } from "./client.js";
+export type { Client, ClientConfig } from "./client.js";
+export { clearProjectSession, loadProjectSession, saveProjectSession, } from "./storage.js";
+export type { ProjectSession } from "./storage.js";
+export type { Comment, CreateCommentBody, CreatePostBody, ListCommentsResponse, ListPostsResponse, Post, ReportReason, } from "./types.js";
 export type { Appearance, Features, Slots, SlotResult, QuipierCommentView, CommentCtx, BaseCtx, CommentActions, SlotHelpers, } from "./customize.js";
 export interface InitOptions {
     container: string | HTMLElement;
