@@ -1,12 +1,19 @@
 import { HEADERS } from "./constants.js";
 import type {
+  ChatMessage,
+  ChatRoom,
   Comment,
   CreateCommentBody,
+  CreateOpenRoomInput,
   CreatePostBody,
   ListCommentsResponse,
+  ListMessagesResponse,
+  ListOpenRoomsResponse,
   ListPostsResponse,
+  ListRoomsResponse,
   Post,
   ReportReason,
+  SearchUsersResponse,
 } from "./types.js";
 
 export interface ClientConfig {
@@ -171,6 +178,97 @@ export function createClient(config: ClientConfig) {
     },
     reportPost(id: string, reason: ReportReason): Promise<void> {
       return request<void>("POST", `/v1/posts/${id}/report`, { reason }, "passport");
+    },
+
+    // ── Chat (1:1 DM) ──
+    openDm(targetAuthorId: string): Promise<{ room: ChatRoom }> {
+      return request<{ room: ChatRoom }>(
+        "POST",
+        "/v1/chat/dm",
+        { target_author_id: targetAuthorId },
+        "passport",
+      );
+    },
+    listRooms(): Promise<ListRoomsResponse> {
+      return request<ListRoomsResponse>("GET", "/v1/chat/rooms", undefined, "passport");
+    },
+    createOpenRoom(input: CreateOpenRoomInput): Promise<{ room: ChatRoom }> {
+      return request<{ room: ChatRoom }>("POST", "/v1/chat/rooms", input, "passport");
+    },
+    exploreRooms(limit?: number): Promise<ListOpenRoomsResponse> {
+      const qs = limit ? `?limit=${limit}` : "";
+      return request<ListOpenRoomsResponse>(
+        "GET",
+        `/v1/chat/rooms/explore${qs}`,
+        undefined,
+        "passport",
+      );
+    },
+    joinRoom(roomId: string): Promise<{ room: ChatRoom }> {
+      return request<{ room: ChatRoom }>(
+        "POST",
+        `/v1/chat/rooms/${roomId}/join`,
+        undefined,
+        "passport",
+      );
+    },
+    leaveRoom(roomId: string): Promise<void> {
+      return request<void>(
+        "POST",
+        `/v1/chat/rooms/${roomId}/leave`,
+        undefined,
+        "passport",
+      );
+    },
+    deleteRoom(roomId: string): Promise<void> {
+      return request<void>(
+        "DELETE",
+        `/v1/chat/rooms/${roomId}`,
+        undefined,
+        "passport",
+      );
+    },
+    searchUsers(query: string, limit?: number): Promise<SearchUsersResponse> {
+      const u = new URLSearchParams({ q: query });
+      if (limit) u.set("limit", String(limit));
+      return request<SearchUsersResponse>(
+        "GET",
+        `/v1/chat/users?${u.toString()}`,
+        undefined,
+        "passport",
+      );
+    },
+    listMessages(params: {
+      room_id: string;
+      cursor?: string;
+      limit?: number;
+    }): Promise<ListMessagesResponse> {
+      const u = new URLSearchParams();
+      if (params.cursor) u.set("cursor", params.cursor);
+      if (params.limit) u.set("limit", String(params.limit));
+      const qs = u.toString();
+      return request<ListMessagesResponse>(
+        "GET",
+        `/v1/chat/rooms/${params.room_id}/messages${qs ? `?${qs}` : ""}`,
+        undefined,
+        "passport",
+      );
+    },
+    sendMessage(roomId: string, content: string): Promise<{ message: ChatMessage }> {
+      return request<{ message: ChatMessage }>(
+        "POST",
+        `/v1/chat/rooms/${roomId}/messages`,
+        { content },
+        "passport",
+      );
+    },
+    markRoomRead(roomId: string): Promise<void> {
+      return request<void>(
+        "POST",
+        `/v1/chat/rooms/${roomId}/read`,
+        undefined,
+        "passport",
+      );
     },
   };
 }

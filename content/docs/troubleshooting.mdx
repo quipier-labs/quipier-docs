@@ -1,0 +1,61 @@
+---
+title: 문제 해결
+description: origin not allowed, 401/403/429, 패스포트 연결, 이미지 업로드 등 자주 만나는 문제와 해법.
+---
+
+## "origin not allowed" (401)
+
+위젯을 띄운 페이지의 origin이 프로젝트에 허용되지 않은 경우입니다.
+
+- **localhost / 127.0.0.1** 은 항상 허용됩니다 — 로컬 개발에서 이 에러가 난다면 `apiKey`/`projectId`가 다른 프로젝트의 것일 가능성이 큽니다.
+- **development 모드 프로젝트**는 모든 origin을 허용합니다. 테스트는 dev 프로젝트로 하세요.
+- **production 모드 프로젝트**는 대시보드 → 프로젝트 → Service → 도메인에서 **등록 + 소유 확인(verified)** 된 도메인만 허용합니다. 와일드카드(`*.example.com`)를 지원합니다.
+- **React Native**는 브라우저 origin이 없어 SDK가 `x-quipier-origin` 헤더를 자동으로 보냅니다 — 별도 등록이 필요 없습니다. 직접 API를 호출한다면 이 헤더를 같이 보내세요.
+
+## "invalid api key" (401)
+
+- 키가 `qp_`로 시작하는 **publishable key**인지, 복사 중 잘렸는지 확인하세요.
+- 대시보드에서 키를 **재발급(rotate)** 했다면 이전 키는 즉시 무효화됩니다.
+
+## 403 — 메시지별 원인
+
+| 메시지 | 원인 | 해법 |
+| --- | --- | --- |
+| `comments are disabled…` / `the feed is disabled…` | 모듈 OFF | 대시보드 → 모듈 설정에서 토글 ON |
+| `quota exceeded: …` | 플랜 한도 초과 | 사용량 확인, 플랜/한도 조정 |
+| `this passport is blocked…` | 운영자가 해당 신원 차단 | 대시보드 → 설정 → 작성자 차단에서 해제 |
+| `this IP is blocked…` | IP 차단(영구 또는 임시) | 설정 → IP 차단 확인 |
+
+## 429 — "too many comments/posts"
+
+스팸 방지를 위해 **IP당 분당 10건** 작성 제한이 있습니다. 잠시 후 다시 시도하면 됩니다. 정상 사용자가 자주 걸린다면 공유 IP(사내망 등) 환경일 수 있습니다.
+
+## 패스포트 연결이 안 돼요
+
+- **팝업이 안 뜸**: 브라우저 팝업 차단 확인. 위젯의 연결 버튼은 사용자 클릭에서 호출되므로 보통 허용되지만, 확장프로그램이 막는 경우가 있습니다.
+- **팝업이 안 닫히거나 연결이 안 됨 (RN)**: `react-native-webview`가 설치돼 있는지 확인하세요. SDK가 `window.opener`/`window.close`를 WebView용으로 변환해 처리합니다 — `@quipier/react-native`를 최신으로 유지하세요.
+- **로컬 개발**: 패스포트 앱도 로컬로 쓰려면 `passportAppOrigin: "http://localhost:3100"` 처럼 명시해야 합니다. 기본값은 `https://passport.quipier.com`.
+- **시드 문구 분실**: 패스포트는 서버가 복구할 수 없습니다(기기 보관). 새 패스포트를 만들면 **이전 신원의 글과는 연결되지 않습니다**.
+
+## 댓글/포스트가 안 보여요
+
+- `project_id` 확인 + Comments는 `pageId`가 **정확히 일치**해야 같은 스레드입니다 (`/blog/hello` ≠ `/blog/hello/`).
+- 운영자가 숨김 처리한 글은 위젯에서 접힌 상태로 표시됩니다.
+- 모듈 OFF여도 **읽기는 동작**합니다 — 글이 아예 없다면 다른 프로젝트를 보고 있을 가능성이 큽니다.
+
+## 이미지 업로드가 실패해요
+
+- 서버 한도는 **디코드 기준 2MB**, `data:image/...` data URL만 받습니다.
+- 웹/RN SDK는 자동으로 리사이즈·압축합니다(긴 변 1600px). 직접 API를 호출한다면 같은 기준으로 압축해 보내세요.
+
+## Next.js에서 위젯이 안 떠요
+
+`init()`은 브라우저 전용입니다. React 래퍼(`<QuipierComments>`/`<QuipierFeed>` — `@quipier/sdk/react`)를 쓰면 클라이언트 마운트가 자동 처리됩니다. 직접 `init()`을 쓴다면 `useEffect` 안에서 호출하세요.
+
+## 위젯 스타일이 사이트와 충돌해요
+
+위젯의 모든 스타일은 `.quipier-root` 아래 스코프되고 색·폰트는 CSS 변수(`--quipier-*`)입니다. [커스터마이징](/docs/customization)의 `appearance`로 토큰을 맞추는 게 가장 안전합니다.
+
+## 그래도 안 되면
+
+[support@quipier.com](mailto:support@quipier.com) 으로 **프로젝트 ID + 에러 응답 본문**(`{error:{code,message}}`)을 보내주세요.

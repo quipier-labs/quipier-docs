@@ -63,6 +63,48 @@ function App() {
 
 `QuipierComments`는 `init`/`destroy`를 React 라이프사이클에 맞춰 호출합니다. 한 페이지에 여러 개를 두면 각각 다른 `pageId`로 댓글 흐름이 분리됩니다. Provider config는 컴포넌트 prop으로 인스턴스 단위 override 가능 (`apiKey`, `apiBase`, `walletAppOrigin`).
 
+### React headless Feed
+
+서비스 고유 UI를 유지하려면 완성형 `<QuipierFeed />` 대신 headless hook을 사용합니다.
+SDK가 패스포트 세션, API 호출, 페이지네이션, optimistic like를 관리하고 앱은
+마크업과 화면 전환을 직접 구성합니다.
+
+```tsx
+import {
+  QuipierProvider,
+  useQuipierFeed,
+  useQuipierSession,
+} from "@quipier/sdk/react";
+
+function Feed() {
+  const feed = useQuipierFeed();
+  const passport = useQuipierSession();
+
+  return (
+    <>
+      {!passport.session && <button onClick={passport.connect}>연결</button>}
+      {feed.posts.map((post) => (
+        <button key={post.id} onClick={() => feed.selectPost(post.id)}>
+          {post.nickname}: {post.content}
+        </button>
+      ))}
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <QuipierProvider config={{ projectId: "...", apiKey: "qp_..." }}>
+      <Feed />
+    </QuipierProvider>
+  );
+}
+```
+
+`useQuipierFeed()`는 목록/상세/답글 상태와 `createPost`, `createReply`,
+`toggleLike`, `updatePost`, `deletePost`, `reportPost`, `loadMore`, `refresh`
+액션을 제공합니다. 저수준 통합에는 패키지 루트의 `createClient()`를 사용할 수 있습니다.
+
 ## Options (`init`)
 
 ```ts

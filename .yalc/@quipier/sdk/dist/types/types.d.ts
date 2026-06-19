@@ -75,4 +75,71 @@ export interface ListPostsResponse {
     posts: Post[];
     next_cursor: string | null;
 }
+export type ChatRoomKind = "dm" | "open";
+/** The other participant of a 1:1 DM, relative to the requester. */
+export interface ChatPeer {
+    author_id: string;
+    nickname: string | null;
+}
+/** A chat room. `kind: "dm"` → has `peer`; `kind: "open"` → has `name`/etc. */
+export interface ChatRoom {
+    id: string;
+    project_id: string;
+    kind: ChatRoomKind;
+    created_at: string;
+    last_message_at: string | null;
+    last_message_preview: string | null;
+    /** DM only — the other participant. Null for open rooms. */
+    peer: ChatPeer | null;
+    /** Open room only — title. */
+    name: string | null;
+    /** Who created the room (project_token_id). */
+    created_by: string;
+    /** App-defined data, stored opaquely (timer/expiry, category, icon, …). */
+    metadata: Record<string, unknown> | null;
+    /** Member count (2 for a DM, N for open). */
+    member_count: number;
+    /** Open room only — capacity. Null = unlimited. */
+    max_members: number | null;
+    /** Unread messages for the requester. */
+    unread: number;
+    /** Whether the requester is a member (always true except explore listings). */
+    joined: boolean;
+}
+export interface CreateOpenRoomInput {
+    name: string;
+    max_members?: number | null;
+    /** App-defined data, stored opaquely (timer/expiry, category, …). */
+    metadata?: Record<string, unknown> | null;
+}
+export interface ListOpenRoomsResponse {
+    rooms: ChatRoom[];
+}
+/** A single chat message. `mine` is true when the requester is the sender. */
+export interface ChatMessage {
+    id: string;
+    room_id: string;
+    author_id: string;
+    nickname: string | null;
+    content: string;
+    is_deleted: boolean;
+    created_at: string;
+    mine: boolean;
+}
+/** A discoverable end user, for the "new DM" picker. */
+export interface ChatUser {
+    author_id: string;
+    nickname: string | null;
+}
+export interface ListRoomsResponse {
+    rooms: ChatRoom[];
+}
+export interface SearchUsersResponse {
+    users: ChatUser[];
+}
+export interface ListMessagesResponse {
+    /** Oldest → newest. `next_cursor` pages further back in time. */
+    messages: ChatMessage[];
+    next_cursor: string | null;
+}
 //# sourceMappingURL=types.d.ts.map

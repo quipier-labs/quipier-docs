@@ -1,0 +1,124 @@
+---
+title: React Native
+description: "@quipier/react-native — 네이티브 앱에 Comments·Feed 위젯 임베드. Expo 지원, 패스포트 WebView 연결."
+---
+
+`@quipier/react-native` 패키지로 네이티브 앱에 웹과 같은 위젯을 임베드합니다. 백엔드는 동일(`api.quipier.com`)하고, 패스포트 연결은 `react-native-webview` 모달로, 세션은 `@react-native-async-storage/async-storage`에 저장됩니다.
+
+## 설치
+
+```bash
+# bare RN
+npm i @quipier/react-native react-native-webview @react-native-async-storage/async-storage
+
+# Expo
+npx expo install react-native-webview @react-native-async-storage/async-storage
+npm i @quipier/react-native
+```
+
+## Comments
+
+```tsx
+import { QuipierComments } from "@quipier/react-native";
+
+const QUIPIER_CONFIG = {
+  apiKey: "qp_YOUR_PUBLISHABLE_KEY",
+  projectId: "YOUR_PROJECT_ID",
+  pageId: "/posts/my-post",
+};
+
+export default function PostScreen() {
+  return (
+    <QuipierComments
+      apiKey={QUIPIER_CONFIG.apiKey}
+      projectId={QUIPIER_CONFIG.projectId}
+      pageId={QUIPIER_CONFIG.pageId}
+      theme="auto"
+      onComment={(c) => console.log("새 댓글:", c.id)}
+    />
+  );
+}
+```
+
+웹 SDK와 동일하게 `apiKey`·`projectId`·`pageId`만 주면 됩니다. 키/ID는 **코드에 직접 박는 것**이 정상입니다(`qp_…`은 publishable이라 클라이언트 노출 전제).
+
+### Props
+
+웹 `init` 옵션과 거의 동일:
+
+- `apiKey`, `projectId`, `pageId` — 필수
+- `apiBase` — 기본 `https://api.quipier.com`
+- `passportAppOrigin` — 기본 `https://passport.quipier.com`
+- `theme` — `"light"` | `"dark"` | `"auto"`(OS 색상 모드 따라감)
+- `dateFormat` — `"relative"`(기본) | `"absolute"`
+- `maxDepth` — `2`(기본, 답글 활성) | `1`(평면)
+- `sort` — `"top"`(기본) | `"newest"`
+- `onComment` — 새 댓글 작성 콜백
+- `appearance` / `features` / `slots` — [커스터마이징](/docs/customization)과 동일한 모델 (slots는 React 노드 반환)
+
+## Feed
+
+트위터형 프로젝트 전역 피드(`pageId` 없음). 타임라인 → 포스트 탭 → 스레드 구조입니다.
+
+```tsx
+import { QuipierFeed } from "@quipier/react-native";
+
+export default function FeedScreen() {
+  return (
+    <QuipierFeed
+      apiKey="qp_YOUR_PUBLISHABLE_KEY"
+      projectId="YOUR_PROJECT_ID"
+      theme="auto"
+      onPost={(p) => console.log("새 포스트:", p.id)}
+    />
+  );
+}
+```
+
+### 이미지 첨부 — `imagePicker`
+
+SDK는 특정 picker 라이브러리에 의존하지 않습니다. 앱이 `data:image/...` URL을 반환하는 함수를 넘기면 작성기에 이미지 버튼이 생깁니다. Expo 예시(크기 자동 압축 포함):
+
+```tsx
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+
+async function pickImage(): Promise<string | null> {
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) throw new Error("사진 접근 권한이 필요합니다");
+  const res = await ImagePicker.launchImageLibraryAsync({ quality: 1 });
+  if (res.canceled || !res.assets?.[0]?.uri) return null;
+
+  // 긴 변 1600px·JPEG로 압축해 업로드 한도(2MB)에 맞춤
+  const out = await ImageManipulator.manipulateAsync(
+    res.assets[0].uri,
+    res.assets[0].width > 1600 ? [{ resize: { width: 1600 } }] : [],
+    { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+  );
+  return out.base64 ? `data:image/jpeg;base64,${out.base64}` : null;
+}
+
+<QuipierFeed apiKey="…" projectId="…" imagePicker={pickImage} />
+```
+
+### 공유 버튼 — `shareUrl`
+
+네이티브 앱에는 글의 정규 URL이 없으므로, base를 주면 상세 화면에 공유 버튼이 생깁니다(`${base}?qp_post=<id>`로 OS 공유 시트 호출):
+
+```tsx
+<QuipierFeed apiKey="…" projectId="…" shareUrl="https://your-site.com/community" />
+```
+
+받는 사람이 그 링크를 브라우저로 열면, 같은 페이지에 임베드된 **웹 Feed 위젯이 해당 포스트를 바로 엽니다**(`qp_post` 딥링크).
+
+## 클라이언트 식별 (분류 ≠ 검증)
+
+운영 대시보드는 `iOS`/`Android`/`웹` 뱃지로 클라이언트를 표시합니다. 이는 SDK가 자기 보고하는 `x-quipier-client` 헤더 기반의 **분류**일 뿐 위조를 막지는 못합니다. 실제 abuse 보호는 패스포트 JWT(작성자 단위)·IP/패스포트 차단·분당 rate limit으로 합니다. "이 앱이 우리 앱이 맞다"는 증명이 필요해지면 Apple App Attest + Google Play Integrity 도입 예정.
+
+## 네이티브 전용 메모
+
+- **`react-native-webview`**는 패스포트 `/join` 모달용. 미설치 시 모달 자리에 안내 문구가 뜹니다. Expo Go는 호환 WebView를 들고 있으니 그대로 동작하지만, 처음으로 네이티브 모듈을 추가했다면 **dev-client 빌드(`npx expo run:ios` / `run:android`)** 를 한 번 만들어두는 게 안전합니다.
+- **`@react-native-async-storage/async-storage`**는 세션 영속화용(optional peer). 없으면 콜드스타트마다 세션이 초기화될 뿐 앱은 계속 동작합니다.
+- **로컬 API 서버**(`wrangler dev`, 기본 `:8787`)에 붙일 때 `apiBase`는 LAN IP로(`http://192.168.x.x:8787`). 시뮬레이터/에뮬레이터에서 `localhost`는 호스트와 분리돼 있어 보통 안 통합니다.
+- **번들 ID/패키지**는 임의로 잡아도 무방 — 모바일 앱에서는 origin 검사를 우회하는 publishable key 동작이라 별도 등록이 필요 없습니다.
+- 이미지 picker를 쓰면 iOS 빌드에 사진 권한 문구가 필요합니다: `app.config.js` plugins에 `["expo-image-picker", { photosPermission: "…" }]`.

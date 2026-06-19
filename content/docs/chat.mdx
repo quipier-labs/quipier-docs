@@ -1,0 +1,176 @@
+---
+title: Chat 모듈
+description: 1:1 DM + 오픈채팅방 — 패스포트 신원으로 실시간 대화. headless 훅으로 UI를 직접 그립니다.
+---
+
+**Chat**은 사용자끼리 **1:1 DM**과 **오픈채팅방**(다중 인원)으로 실시간 대화하는 모듈입니다.
+
+[Comments](/docs/comments)·[Feed](/docs/feed)와 달리 Chat은 **완성형 위젯이 없습니다.** 대신 **headless 훅 `useQuipierChat()`** 만 제공해서, UI는 여러분이 직접 그립니다(앱 디자인 그대로). 데이터·세션·**실시간(WebSocket)**·재연결·중복제거는 SDK가 처리합니다.
+
+| | 1:1 DM | 오픈채팅방 |
+| --- | --- | --- |
+| 인원 | 두 명 | 다중(정원 옵션) |
+| 시작 | 닉네임 검색 → `openDM` | `createOpenRoom` / 탐색 후 `joinRoom` |
+| 발견 | 비공개(상대 지정) | `exploreRooms`로 공개 탐색 |
+| 수명 | 영구 | 영구 또는 **타이머**(만료 시 사라짐) |
+
+메시지·실시간·읽음 상태는 두 종류가 **동일하게** 동작합니다.
+
+대시보드에서 **Chat** 모듈을 켜야 동작합니다(Projects → 프로젝트 → Chat → 모듈 상태).
+
+## 설치
+
+```bash
+npm i @quipier/sdk
+```
+
+> Chat은 현재 **웹 SDK(`@quipier/sdk`) 전용**입니다. React Native 미러는 준비 중이며, 그 전에는 패스포트 세션 토큰으로 [REST·WebSocket API](/docs/api-reference#chat)를 직접 호출할 수 있습니다.
+
+## 기본 컴포넌트 (가장 빠름)
+
+UI를 직접 만들 필요 없이, 바로 붙이는 기본 메신저 `<QuipierChat>`이 있습니다 — 방 목록 + 1:1 DM + 오픈방 + 탐색이 다 들어 있습니다.
+
+```tsx
+import { QuipierProvider, QuipierChat } from "@quipier/sdk/react";
+
+export default function ChatPage() {
+  return (
+    <QuipierProvider config={{ apiKey: "qp_…", projectId: "…", theme: "auto" }}>
+      <QuipierChat height={600} />
+    </QuipierProvider>
+  );
+}
+```
+
+- `theme`(`light`/`dark`/`auto`)에 맞춰 자동 스타일링, 모바일에선 1패널로 접힘.
+- 로그인 안 됐으면 "패스포트 연결" 화면을 먼저 보여줍니다.
+- props: `height`(기본 600) · `className` · `style`.
+
+> 디자인을 완전히 바꾸고 싶다면 아래 **headless 훅**으로 UI를 직접 그리세요(예: [AnonChat](https://docs.quipier.com)이 그렇게 합니다).
+
+## 직접 UI를 그리려면 (headless)
+
+`QuipierProvider`로 감싸고(피드·댓글과 config 공유), 컴포넌트에서 훅을 호출합니다. UI는 100% 직접 렌더입니다.
+
+```tsx
+import {
+  QuipierProvider,
+  useQuipierChat,
+  useQuipierSession,
+} from "@quipier/sdk/react";
+
+function App() {
+  return (
+    <QuipierProvider config={{ apiKey: "qp_…", projectId: "…" }}>
+      <Messenger />
+    </QuipierProvider>
+  );
+}
+
+function Messenger() {
+  const { session, connect } = useQuipierSession();
+  const { rooms, messages, activeRoomId, selectRoom, sendMessage, totalUnread } =
+    useQuipierChat();
+
+  if (!session) return <button onClick={connect}>패스포트 연결</button>;
+
+  return (
+    <div>
+      <aside>
+        <strong>대화 {totalUnread > 0 && `· 안 읽음 ${totalUnread}`}</strong>
+        {rooms.map((r) => (
+          <button key={r.id} onClick={() => selectRoom(r.id)}>
+            {r.kind === "dm" ? r.peer?.nickname : r.name}
+            {r.unread > 0 && ` (${r.unread})`}
+          </button>
+        ))}
+      </aside>
+
+      {activeRoomId && (
+        <main>
+          {messages.map((m) => (
+            <div key={m.id} style={{ textAlign: m.mine ? "right" : "left" }}>
+              {!m.mine && <b>{m.nickname}</b>} {m.content}
+            </div>
+          ))}
+          <ChatInput onSend={sendMessage} />
+        </main>
+      )}
+    </div>
+  );
+}
+```
+
+채팅 작성·읽기에는 [패스포트](/docs/passport) 로그인이 필요합니다(댓글·피드와 동일 신원). `useQuipierSession().connect()`로 연결하세요.
+
+## 1:1 DM
+
+닉네임으로 상대를 찾아(`searchUsers`) 대화를 엽니다(`openDM`은 open-or-get — 이미 있으면 그 방을 돌려줍니다).
+
+```tsx
+const { searchUsers, openDM, selectRoom } = useQuipierChat();
+
+const users = await searchUsers("민수");        // [{ author_id, nickname }]
+const room = await openDM(users[0].author_id);   // 1:1 방 (생성 또는 기존)
+selectRoom(room.id);                             // 열기
+```
+
+상대를 정하는 방식은 자유입니다 — 피드 글의 `author_id`, 프로필, 멘션 등 어디서든 `openDM(authorId)`을 호출하면 됩니다.
+
+## 오픈채팅방
+
+```tsx
+const { createOpenRoom, exploreRooms, joinRoom, leaveRoom } = useQuipierChat();
+
+// 만들기 (만든 사람은 자동 참여)
+const room = await createOpenRoom({
+  name: "새벽 감성 라디오",
+  category: "일상",
+  max_members: 50,        // 생략 시 무제한
+  duration_minutes: 60,   // 생략/null = 영구, 값 = 타이머 방
+});
+
+// 탐색 → 참여
+const open = await exploreRooms("게임");  // ChatRoom[] (joined·member_count 포함)
+await joinRoom(open[0].id);               // 정원·만료 자동 체크
+
+// 나가기
+await leaveRoom(room.id);
+```
+
+오픈방 메시지는 발신자가 여럿이라 각 메시지에 `author_id` + `nickname`이 담겨 옵니다(아바타·이름 표시용). 타이머 방은 `expires_at`(ISO)로 카운트다운을 그리세요 — 만료되면 목록·참여에서 자동으로 빠집니다.
+
+## 실시간
+
+직접 WebSocket을 다룰 필요가 없습니다. `selectRoom(id)` 하는 순간 SDK가 그 방의 소켓을 열고:
+
+- 들어온 메시지를 `messages`에 **중복 없이** 추가 → 여러분은 `messages`만 렌더
+- 상대의 입력 신호 → `peerTyping` (작성 시 `notifyTyping()` 호출)
+- 끊기면 **자동 재연결 + 누락분 REST 백필**
+
+내부적으로 **방마다 Cloudflare Durable Object(Hibernatable WebSocket)** 가 메시지를 fan-out 하고, 영속은 D1이 담당합니다. 유휴 방은 hibernate 되어 비용이 들지 않습니다.
+
+## `useQuipierChat()` 반환값
+
+**상태**
+
+- `rooms` — 내 방 목록(DM + 가입 오픈방), 최근 활동 순 · `totalUnread`
+- `activeRoomId` · `messages`(오래된→최신) · `hasMore`
+- `loadingRooms` · `loadingMessages` · `loadingMore` · `sending`
+- `connected` — 패스포트 세션 여부 · `selfAuthorId` · `peerTyping` · `error`
+
+**액션**
+
+- `selectRoom(id)` · `sendMessage(content)` · `loadMore()` · `markRead(id)` · `notifyTyping()`
+- `searchUsers(q)` · `openDM(authorId)`
+- `createOpenRoom(input)` · `exploreRooms(category?)` · `joinRoom(id)` · `leaveRoom(id)`
+- `refreshRooms()` · `clearError()`
+
+`ChatRoom`은 `kind`(`"dm"` | `"open"`)에 따라 `peer`(DM) 또는 `name`/`category`/`member_count`/`max_members`/`expires_at`(오픈방)을 가집니다.
+
+## 프라이버시 & 모더레이션
+
+- **DM은 비공개입니다.** 대시보드 **Chat** 페이지의 운영자는 **집계(방·메시지·참여자 수)만** 보고, 대화 내용은 보지 않습니다.
+- 작성자·IP 차단은 [Comments](/docs/comments)·[Feed](/docs/feed)와 **공유**됩니다 — 한 번 차단하면 채팅 시작·전송도 막힙니다.
+
+전체 엔드포인트는 [API 레퍼런스 → Chat](/docs/api-reference#chat)에 있습니다.

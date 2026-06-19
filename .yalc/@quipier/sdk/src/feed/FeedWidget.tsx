@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { Post } from "../types.js";
+import type { Appearance } from "../customize.js";
+import { mapAppearance } from "../appearance.js";
 import { ApiError, createClient, type Client } from "../client.js";
 import {
   clearProjectSession,
@@ -28,6 +30,8 @@ interface FeedWidgetProps {
    *  function for full control. Omit → the current page URL with the post param
    *  (works when the feed lives on a shareable page). */
   shareUrl?: string | ((post: Post) => string);
+  /** Theme tokens (colors, font, radius …) — same model as the comments widget. */
+  appearance?: Appearance;
 }
 
 const JOIN_MESSAGE_TYPE = "quipier:join:result";
@@ -353,7 +357,12 @@ export function FeedWidget(props: FeedWidgetProps) {
   const openPending = !!openPostId && !openPost;
 
   return (
-    <div class="quipier-root quipier-feed" data-quipier-theme={props.theme ?? "light"} data-quipier-part="root">
+    <div
+      class="quipier-root quipier-feed"
+      data-quipier-theme={props.theme ?? "light"}
+      data-quipier-part="root"
+      style={mapAppearance(props.appearance)}
+    >
       {error ? <div class="quipier-error">{error}</div> : null}
 
       {openPending ? (
